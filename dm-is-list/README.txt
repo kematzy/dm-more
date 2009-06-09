@@ -31,8 +31,8 @@ You can now move objects around like this:
 
  item.move(:highest)        # moves to top of list
  item.move(:lowest)         # moves to bottom of list
- item.move(:up)             # moves one up (:higher and :up is the same)
- item.move(:down)           # moves one up (:lower and :down is the same)
+ item.move(:up)             # moves one up (:higher and :up is the same) within the scope
+ item.move(:down)           # moves one up (:lower and :down is the same) within the scope
  item.move(:to => position) # moves item to a specific position
  item.move(:above => other) # moves item above the other item.*
  item.move(:below => other) # moves item above the other item.*
@@ -51,7 +51,8 @@ likely want to do:
  item.user_id # => 1
  item.user_id = 2 # giving this item to another user
  item.save # the list will now have detached item from old list, and inserted
-           # at the bottom of the new (user 2) list.
+           # at the bottom of the new (user 2) list in the same manner as 
+           # adding a new item without preassigned position
 
 If something is not behaving intuitively, it is a bug, and should be reported.
 Report it here: http://wm.lighthouseapp.com/projects/4819-datamapper/overview
