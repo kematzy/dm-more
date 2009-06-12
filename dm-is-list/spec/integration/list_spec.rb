@@ -18,8 +18,6 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
 
       property :id,    Serial
       property :title, String
-      property :position, Integer, :nullable => false, :unique_index => :position
-      property :user_id, Integer, :unique_index => :position
 
       belongs_to :user
 
@@ -158,10 +156,8 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
           item.save
 
           item.list_scope.should != item.original_list_scope
-          item.position.should == 4
-          Todo.get(1).position.should == 1
-          Todo.get(2).position.should == 2
-          Todo.get(3).position.should == 3
+          item.position.should == 1
+          Todo.get(1).position.should == 2
           Todo.get(5).position.should == 1
 
           item.user_id = 2
