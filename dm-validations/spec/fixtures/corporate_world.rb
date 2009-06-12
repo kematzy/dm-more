@@ -19,6 +19,7 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
 
           property :id, Serial
           property :name, String
+          property :manager, String
 
           validates_is_unique :name
           auto_migrate!

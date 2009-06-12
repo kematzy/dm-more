@@ -28,7 +28,21 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
     end
   end
 
+  describe "with unique name and updating " do
+    before :all do
+      @model = ::DataMapper::Validate::Fixtures::Department.new(:name => "R & D", :manager => "Adam")
+    end
 
+    it_should_behave_like "valid model"
+    
+    it "should update the and not trigger an error" do
+      @model.manager.should == 'Adam'
+      @model.manager = 'Eve'
+      @model.save.should == true
+      @model.should be_valid
+      @model.errors.should be_empty
+    end
+  end
 
   describe DataMapper::Validate::Fixtures::Organisation do
     before :all do
