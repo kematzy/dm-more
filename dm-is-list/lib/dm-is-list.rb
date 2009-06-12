@@ -1,5 +1,4 @@
 require 'pathname'
-require 'dm-core'
 require 'dm-adjust'
 require 'dm-aggregates'
 
