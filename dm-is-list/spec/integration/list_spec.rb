@@ -526,8 +526,6 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
       
       describe "#detach" do 
         
-        #  NOTE:: Illogical behaviour. Adding the scope param should change the scope to that scope. 
-        
         it 'should detach from list and retain scope' do 
           DataMapper.repository(:default) do |repos| 
             item = Todo.get(2) 
@@ -563,6 +561,51 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
         end
         
       end #/ #detach
+      
+      describe "#move_to_list" do 
+        
+        it "should move an item from one list to the bottom of another list" do 
+          # pending
+          DataMapper.repository(:default) do |repos|
+            item = Todo.get(2)
+            list_scope = Todo.get(6).list_scope
+            list_scope.should == { :user_id => @u2.id }
+            
+            item.move_to_list(@u2.id)
+            # equivalent of:
+            #   item.detach
+            #   item.user = @u2
+            #   item.save
+            #   item.reload
+            
+            todo_list(:user => @u1).should == [ [1, 1], [3, 2], [4, 3], [5, 4] ]
+            
+            todo_list(:user => @u2).should == [ [6, 1], [7, 2], [8, 3], [2, 4] ]
+          end
+        end
+        
+        it "should move an item from one list to a fixed position in another list" do 
+          # pending
+          DataMapper.repository(:default) do |repos|
+            item = Todo.get(2)
+            list_scope = Todo.get(6).list_scope
+            list_scope.should == { :user_id => @u2.id }
+            
+            item.move_to_list(@u2.id, 3)
+            # equivalent of:
+            #   item.detach
+            #   item.user_id = @u2.id
+            #   item.save
+            #   item.reload
+            #   item.move(3)
+            
+            todo_list(:user => @u1).should == [ [1, 1], [3, 2], [4, 3], [5, 4] ]
+            
+            todo_list(:user => @u2).should == [ [6, 1], [7, 2], [2, 3], [8, 4] ]
+          end
+        end
+        
+      end #/ #move_to_list
       
       describe "#left_sibling (alias #higher_item or #previous_item)" do 
         
@@ -686,18 +729,21 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
           end
         end
         
+      end # automatic positioning
+      
+      describe "Manual Positioning" do 
+        # NOTE:: The positions in the list does NOT change automatically when an item is given
+        # a position via this syntax:
+        #   
+        #   item.position = 4
+        #   item.save
+        # 
+        # Enabling this functionality (re-shuffling list on update) causes a lot of extra SQL queries
+        # and ultimately still get the list order wrong when doing a batch update.
+        # 
+        # This 'breakes' the common assumption of updating an item variable, but I think it's a worthwhile break
+        
         it 'should NOT rearrange items when setting position manually' do 
-          # NOTE:: The positions in the list does NOT change automatically when an item is given
-          # a position via this syntax:
-          #   
-          #   item.position = 4
-          #   item.save
-          # 
-          # Enabling this functionality (re-shuffling list on update) causes a lot of extra SQL queries
-          # and ultimately still get the list order wrong when doing a batch update.
-          # 
-          # This 'breakes' the common assumption of updating an item variable, but I think it's a worthwhile break
-          
           DataMapper.repository(:default) do |repos|
             item = Todo.get(2)
             item.position = 1
@@ -708,10 +754,23 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
             item.update(:position => 3)
             todo_list.should == [ [1, 1], [2, 3], [3, 3], [4, 4], [5, 5] ] # note, the two items with 3 as position
           end
+        end
+        
+        it 'should NOT rearrange items when setting position manually via update()' do 
+          DataMapper.repository(:default) do |repos|
+            item = Todo.get(2)
+            item.update(:position => 1)
+            
+            todo_list.should == [ [1, 1], [2, 1], [3, 3], [4, 4], [5, 5] ] # note, the two items with 1 as position
+            
+            item.update(:position => 3)
+            todo_list.should == [ [1, 1], [2, 3], [3, 3], [4, 4], [5, 5] ] # note, the two items with 3 as position
+          end
           
         end
         
-      end # automatic positioning
+      end #/ Manual Positioning
+      
       
       describe "Batch change item positions" do 
         
@@ -878,7 +937,6 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
         end
         
         it "should update list when doing item.reload" do
-          DataMapper.logger.debug "Twilight Zone => accessing the same object via two variables => should update list when doing item.reload"
           DataMapper.repository(:default) do |repos|
             item = Todo.get(5)
             item.position.should == 5

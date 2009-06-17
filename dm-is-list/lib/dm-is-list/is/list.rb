@@ -200,6 +200,27 @@ module DataMapper
         end
         
         ##
+        # moves an item from one list to another
+        # 
+        # @param scope <Integer> must be the id value of the scope
+        # @param pos <Integer> Optional sets the entry position for the item in the new list
+        # 
+        # @example [Usage]
+        #   Todo.get(2).move_to_list(2)
+        #   Todo.get(2).move_to_list(2, 10)
+        # 
+        # @return <Boolean> True/False based upon result
+        # 
+        # @api public
+        def move_to_list(scope, pos = nil)
+          self.detach   # remove from current list
+          self.attribute_set(model.list_options[:scope][0], scope.to_i) # set new scope
+          self.save     # save progress. Needed to get the positions correct.
+          self.reload   # get a fresh new start
+          self.move(pos) unless pos.nil?
+        end
+        
+        ##
         # finds the previous _higher_ item in the list (lower in number position)
         # 
         # @return <Model> the previous list item
