@@ -5,7 +5,7 @@ module DataMapper
   module Types
     class FilePath < DataMapper::Type
       primitive String
-      size 255
+      length    255
 
       def self.load(value, property)
         if value.blank?
@@ -25,5 +25,5 @@ module DataMapper
         value.kind_of?(Pathname) ? value : load(value, property)
       end
     end # class FilePath
-  end # module Types
-end # module DataMapper
+  end # module Types
+end # module DataMapper

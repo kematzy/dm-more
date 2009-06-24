@@ -22,6 +22,11 @@ module DataMapper
             node[attr_name] = attr_val
           end
           parent << node
+          node
+        end
+
+        def self.add_xml(parent, xml)
+          parent << xml.root.copy(true)
         end
 
         def self.output(doc)

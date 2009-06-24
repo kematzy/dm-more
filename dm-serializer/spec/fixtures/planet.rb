@@ -4,10 +4,14 @@ class Planet
   property :name,     String, :key => true
   property :aphelion, Float
 
+  validates_length :name, :min => 2
+
   # Sorry these associations don't make any sense
   # I just needed a many-to-many association to test against
   has n, :friended_planets
   has n, :friend_planets, :through => :friended_planets, :model => 'Planet'
+
+  belongs_to :solar_system
 
   def category
     case self.name.downcase
@@ -30,4 +34,13 @@ class FriendedPlanet
 
   belongs_to :planet, :child_key => [ :planet_name ]
   belongs_to :friend_planet, :model => 'Planet', :child_key => [ :friend_planet_name ]
+end
+
+class SolarSystem
+  include DataMapper::Resource
+
+  property :id, Serial
+
+  property :name, String
+
 end
