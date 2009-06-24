@@ -27,29 +27,35 @@ require Pathname(__FILE__).dirname.expand_path.parent + 'spec_helper'
         protected
 
         def deserialize(result)
-          doc = REXML::Document.new(result)
-          root = doc.elements[1]
-          if root.attributes["type"] == "array"
-            root.elements.collect do |element|
-              a = {}
-              element.elements.each do |v|
-                a.update(v.name => cast(v.text, v.attributes["type"]))
+          f = lambda do |element|
+            case element.attributes["type"]
+            when "hash"
+              element.elements.to_a.inject({}) do |a, e|
+                a.update(e.name => f[e]) 
               end
-              a
+            when "array"
+              element.elements.collect do |e|
+                f[e]
+              end
+            else
+              if element.elements.empty?
+                cast(element.text, element.attributes["type"])
+              else
+                element.elements.to_a.inject({}) do |a, e|
+                  a.update(e.name => f[e]) 
+                end
+              end
             end
-          else
-            a = {}
-            root.elements.each do |v|
-              a.update(v.name => cast(v.text, v.attributes["type"]))
-            end
-            a
           end
+
+          doc = REXML::Document.new(result)
+          f[doc.elements[1]]
         end
 
         def cast(value, type)
           boolean_conversions = {"true" => true, "false" => false}
           value = boolean_conversions[value] if boolean_conversions.has_key?(value)
-          value = value.to_i if value && type == "integer"
+          value = value.to_i if value && ["integer", "datamapper::types::serial"].include?(type)
           value
         end
       end.new

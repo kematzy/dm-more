@@ -3,10 +3,14 @@ require 'rubygems'
 
 gem 'dm-core', '0.10.0'
 require 'dm-core'
+gem 'dm-validations', '0.10.0'
+require 'dm-validations'
 
 ROOT = Pathname(__FILE__).dirname.parent
 
-require ROOT / 'lib' / 'dm-serializer'
+$LOAD_PATH.unshift(ROOT / 'lib')
+
+require 'dm-serializer'
 
 def load_driver(name, default_uri)
   return false if ENV['ADAPTER'] != name.to_s
