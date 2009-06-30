@@ -33,6 +33,7 @@ GEM_PATHS = %w[
   dm-sweatshop
   dm-tags
   dm-timestamps
+  rails_datamapper
 ].freeze
 
 gems = GEM_PATHS.map { |p| File.basename(p) }
@@ -42,8 +43,8 @@ JRUBY   = RUBY_PLATFORM =~ /java/
 WINDOWS = Gem.win_platform?
 SUDO    = (WINDOWS || JRUBY) ? '' : ('sudo' unless ENV['SUDOLESS'])
 
-AUTHOR = 'Sam Smoot'
-EMAIL  = 'ssmoot [a] gmail [d] com'
+AUTHOR = 'Dan Kubb'
+EMAIL  = 'dan.kubb [a] gmail [d] com'
 GEM_NAME = 'dm-more'
 GEM_VERSION = DataMapper::More::VERSION
 GEM_DEPENDENCIES = [['dm-core', GEM_VERSION], *gems.map { |g| [g, GEM_VERSION] }]

@@ -122,8 +122,8 @@ module DataMapper
         #
         # @api private
         def valid_relationship_for_constraint?(relationship)
-          return false unless relationship.source_repository_name == name
-          return false unless relationship.target_repository_name == name
+          return false unless relationship.source_repository_name == name || relationship.source_repository_name.nil?
+          return false unless relationship.target_repository_name == name || relationship.target_repository_name.nil?
           return false unless relationship.kind_of?(Associations::ManyToOne::Relationship)
           true
         end
@@ -227,6 +227,20 @@ module DataMapper
         end
 
         include SQL
+      end
+
+      module Sqlite3Adapter
+        def constraint_exists?(*)
+          false
+        end
+
+        def create_relationship_constraint(*)
+          false
+        end
+
+        def destroy_relationship_constraint(*)
+          false
+        end
       end
 
       module Model
