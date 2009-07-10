@@ -21,6 +21,7 @@ require dir / 'validators' / 'block_validator'
 require dir / 'validators' / 'uniqueness_validator'
 require dir / 'validators' / 'acceptance_validator'
 
+require dir / 'support' / 'context'
 require dir / 'support' / 'object'
 
 module DataMapper
@@ -51,10 +52,16 @@ module DataMapper
     # throws :halt and returns false.
     #
     chainable do
-      def save(context = :default)
-        return false unless context.nil? || valid?(context)
-        super()
+
+      def save(context = default_validation_context)
+        validation_context(context) { super() }
       end
+
+      def save_self
+        return false unless validation_context_stack.empty? || valid?(current_validation_context)
+        super
+      end
+      
     end
 
     # Return the ValidationErrors
@@ -164,7 +171,7 @@ module DataMapper
         opts = args.last.kind_of?(Hash) ? args.pop : {}
         context = opts.delete(:group) || opts.delete(:on) || opts.delete(:when) || opts.delete(:context) || :default
         opts[:context] = context
-        opts.mergs!(defaults) unless defaults.nil?
+        opts.merge!(defaults) unless defaults.nil?
         opts
       end
 
