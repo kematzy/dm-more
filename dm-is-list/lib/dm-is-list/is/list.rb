@@ -213,11 +213,13 @@ module DataMapper
         # 
         # @api public
         def move_to_list(scope, pos = nil)
-          self.detach   # remove from current list
-          self.attribute_set(model.list_options[:scope][0], scope.to_i) # set new scope
-          self.save     # save progress. Needed to get the positions correct.
-          self.reload   # get a fresh new start
-          self.move(pos) unless pos.nil?
+          transaction do |txn|
+            self.detach   # remove from current list
+            self.attribute_set(model.list_options[:scope][0], scope.to_i) # set new scope
+            self.save     # save progress. Needed to get the positions correct.
+            self.reload   # get a fresh new start
+            self.move(pos) unless pos.nil?
+          end
         end
         
         ##
@@ -286,7 +288,9 @@ module DataMapper
         # 
         # @api public
         def move(vector)
-          move_without_saving(vector) && save
+          transaction do |txn|
+            move_without_saving(vector) && save
+          end
         end
         
         
