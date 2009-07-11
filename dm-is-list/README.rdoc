@@ -26,7 +26,7 @@ Download or clone +dm-more+ from Github[http://github.com/datamapper/dm-more/].
 
 First of all, for a better understanding of this gem, make sure you study the '<tt>dm-is-list/spec/integration/list_spec.rb</tt>' file.
 
-<hr>
+----
 
 Require +dm-is-list+ in your app.
 
