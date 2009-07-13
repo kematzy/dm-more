@@ -55,7 +55,8 @@ module DataMapper
         # @param relationship [Relationship]
         #   the relationship to create the constraint for
         #
-        # @return [Boolean]
+        # @return [true, false]
+        #   true if creating the constraints was successful
         #
         # @api semipublic
         def create_relationship_constraint(relationship)
@@ -91,7 +92,8 @@ module DataMapper
         # @param relationship [Relationship]
         #   the relationship to remove the constraint for
         #
-        # @return [Boolean]
+        # @return [true, false]
+        #   true if destroying the constraint was successful
         #
         # @api semipublic
         def destroy_relationship_constraint(relationship)
@@ -109,7 +111,7 @@ module DataMapper
         private
 
         ##
-        # Check ot see if the relationship's constraints can be used
+        # Check to see if the relationship's constraints can be used
         #
         # Only one-to-one, one-to-many, and many-to-many relationships
         # can be used for constraints.  They must also be in the same
@@ -118,7 +120,8 @@ module DataMapper
         # @param relationship [Relationship]
         #   the relationship to check
         #
-        # @return [Boolean]
+        # @return [true, false]
+        #   true if a constraint can be established for relationship
         #
         # @api private
         def valid_relationship_for_constraint?(relationship)
@@ -246,10 +249,12 @@ module DataMapper
       module Model
         def auto_migrate_down_with_constraints!(repository_name = self.repository_name)
           return unless storage_exists?(repository_name)
+          return if self.respond_to?(:is_remixable?) && self.is_remixable?
           execute_each_relationship(:destroy_relationship_constraint, repository_name)
         end
 
         def auto_migrate_up_with_constraints!(repository_name = self.repository_name)
+          return if self.respond_to?(:is_remixable?) && self.is_remixable?
           execute_each_relationship(:create_relationship_constraint, repository_name)
         end
 
