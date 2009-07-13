@@ -500,6 +500,23 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
           end
         end
         
+        it 'should repair the list positions in a really messed up list while retaining the order' do 
+          DataMapper.repository(:default) do |repos|
+            # need to set these fixed in order to test the outcome
+            new_positions = [ 83, 5, 186, 48, 99 ]
+            Todo.all.each do |item|
+              item.update(:position => new_positions[item.id-1] )
+            end
+            # note the order of item id's
+            todo_list.should == [ [2, 5], [4, 48], [1, 83], [5, 99], [3, 186] ] 
+            
+            item = Todo.get(5)
+            item.repair_list
+            # note position numbers being 1 - 5, and it retained the id positions
+            todo_list.should == [ [2, 1], [4, 2], [1, 3], [5, 4], [3, 5] ]
+          end
+        end
+        
       end #/ #repair_list
       
       describe "#reorder_list" do 
@@ -565,7 +582,6 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
       describe "#move_to_list" do 
         
         it "should move an item from one list to the bottom of another list" do 
-          # pending
           DataMapper.repository(:default) do |repos|
             item = Todo.get(2)
             list_scope = Todo.get(6).list_scope
@@ -585,7 +601,11 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
         end
         
         it "should move an item from one list to a fixed position in another list" do 
-          pending "This test fails with this error [ no such table: todos ]"
+          pending %Q{Failing Test: Error = [ no such table: todos ]. Error is due to the nested transactions. (See notes in spec)}
+          # NOTE:: This error happens because of the nested transactions taking place 
+          # first within the #move_to_list and then the #move method.
+          # If you comment out either of those transactions, the test passes.
+          
           DataMapper.repository(:default) do |repos|
             item = Todo.get(2)
             list_scope = Todo.get(6).list_scope
@@ -735,7 +755,7 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
         # Enabling this functionality (re-shuffling list on update) causes a lot of extra SQL queries
         # and ultimately still get the list order wrong when doing a batch update.
         # 
-        # This 'breakes' the common assumption of updating an item variable, but I think it's a worthwhile break
+        # This 'breaks' the common assumption of updating an item variable, but I think it's a worthwhile break
         
         it 'should NOT rearrange items when setting position manually' do 
           DataMapper.repository(:default) do |repos|
@@ -1001,7 +1021,14 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
         end
         
         it "should move items :higher in list" do 
-          pending "Tests fails with this error [ columns position, client_id are not unique ]"
+          pending "Failing Test: Error = [ columns position, client_id are not unique ] (See notes in spec)"
+          # NOTE:: This error happens because of the :unique_index => position setting. 
+          # Most likely the reason is due to the order of updates to the position attribute in the DB is NOT
+          # fully consistant, and clashes therefore occur. 
+          # This could be solved(?) with adding an 'ORDER BY position' in the SQL for MySQL, but won't work with SQLite3
+          # 
+          # Commenting out :unique_index => :position in the ClientTodo model enables the tests to pass.
+          
           DataMapper.repository(:default) do |repos|
             ClientTodo.get(2).move(:higher).should == true
             ClientTodo.all.map{ |a| [a.id, a.position] }.should == [ [1, 2], [2, 1] ] + (3..@loop).map { |n| [n,n] }
@@ -1009,7 +1036,7 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
         end
         
         it "should move items :lower in list" do 
-          pending "Tests fails with this error [ columns position, client_id are not unique ]"
+          pending "Failing Test: Error = [ columns position, client_id are not unique ] (See notes in spec)"
           DataMapper.repository(:default) do |repos|
             ClientTodo.get(9).move(:lower).should == true
             ClientTodo.all.map{ |a| [a.id, a.position] }.should == (1..8).map { |n| [n,n] } + [ [9, 10], [10, 9] ] + (11..@loop).map { |n| [n,n] }
