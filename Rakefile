@@ -134,7 +134,14 @@ task :release_all do
   end
 end
 
-%w[ ci spec clean clobber check_manifest ].each do |command|
+desc 'Run specs'
+task :spec do
+  (GEM_PATHS - %w[ rails_datamapper ]).each do |gem_name|
+    Dir.chdir(gem_name){ rake :spec }
+  end
+end
+
+%w[ ci clean clobber check_manifest ].each do |command|
   task command do
     GEM_PATHS.each do |gem_name|
       Dir.chdir(gem_name){ rake "#{command}; true" }
