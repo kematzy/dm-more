@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 require 'addressable/uri'
 
 module DataMapper
