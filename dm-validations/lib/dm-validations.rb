@@ -26,42 +26,37 @@ require dir / 'support' / 'object'
 
 module DataMapper
   module Validate
+    Model.append_inclusions self
+
     extend Chainable
 
     def self.included(model)
       model.class_eval <<-RUBY, __FILE__, __LINE__ + 1
-        def self.create(attributes = {}, context = :default)
+        def self.create(attributes = {}, *args)
           resource = new(attributes)
-          resource.save(context)
-          resource
-        end
-
-        def self.create!(attributes = {})
-          resource = new(attributes)
-          resource.save!
+          resource.save(*args)
           resource
         end
       RUBY
 
       # models that are non DM resources must get .validators
       # and other methods, too
-      model.extend Validate::ClassMethods
+      model.extend ClassMethods
     end
 
     # Ensures the object is valid for the context provided, and otherwise
     # throws :halt and returns false.
     #
     chainable do
-
       def save(context = default_validation_context)
         validation_context(context) { super() }
       end
+    end
 
-      def save_self
-        return false unless validation_context_stack.empty? || valid?(current_validation_context)
-        super
+    chainable do
+      def update(attributes = {}, context = default_validation_context)
+        validation_context(context) { super(attributes) }
       end
-
     end
 
     # Return the ValidationErrors
@@ -142,6 +137,15 @@ module DataMapper
       nil
     end
 
+    private
+
+    chainable do
+      def save_self(*)
+        return false unless validation_context_stack.empty? || valid?(current_validation_context)
+        super
+      end
+    end
+
     module ClassMethods
       include DataMapper::Validate::ValidatesPresent
       include DataMapper::Validate::ValidatesAbsent
@@ -182,20 +186,20 @@ module DataMapper
       def create_context_instance_methods(context)
         name = "valid_for_#{context.to_s}?"           # valid_for_signup?
         if !instance_methods.include?(name)
-          class_eval <<-EOS, __FILE__, __LINE__
+          class_eval <<-RUBY, __FILE__, __LINE__ + 1
             def #{name}                               # def valid_for_signup?
-              valid?('#{context.to_s}'.to_sym)        #   valid?('signup'.to_sym)
+              valid?(#{context.to_sym.inspect})       #   valid?(:signup)
             end                                       # end
-          EOS
+          RUBY
         end
 
         all = "all_valid_for_#{context.to_s}?"        # all_valid_for_signup?
         if !instance_methods.include?(all)
-          class_eval <<-EOS, __FILE__, __LINE__
+          class_eval <<-RUBY, __FILE__, __LINE__ + 1
             def #{all}                                # def all_valid_for_signup?
-              all_valid?('#{context.to_s}'.to_sym)    #   all_valid?('signup'.to_sym)
+              all_valid?(#{context.to_sym.inspect})   #   all_valid?(:signup)
             end                                       # end
-          EOS
+          RUBY
         end
       end
 
@@ -231,7 +235,4 @@ module DataMapper
       end
     end # module ClassMethods
   end # module Validate
-
-  Model.append_inclusions Validate
-  Model.append_extensions Validate::ClassMethods
 end # module DataMapper
