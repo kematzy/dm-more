@@ -1,8 +1,5 @@
-require 'pathname'
-
-__dir__ = Pathname(__FILE__).dirname.expand_path
-require __dir__.parent.parent + 'spec_helper'
-require __dir__ + 'spec_helper'
+require 'spec_helper'
+require 'integration/within_validator/spec_helper'
 
 describe DataMapper::Validate::Fixtures::PhoneNumber do
   before(:all) do
@@ -45,7 +42,7 @@ describe DataMapper::Validate::Fixtures::PhoneNumber do
     it_should_behave_like "invalid model"
 
     it "has meaningful error message on invalid property" do
-      @model.errors.on(:type_of_number).should include("Should be one of: home, cell or work")
+      @model.errors.on(:type_of_number).should == [ 'Should be one of: home, cell or work' ]
     end
   end
 end
@@ -66,7 +63,7 @@ describe DataMapper::Validate::Fixtures::MathematicalFunction do
     it_should_behave_like "invalid model"
 
     it "notices 'greater than or equal to 1' in the error message" do
-      @model.errors.on(:input).should include("Input must be greater than or equal to 1")
+      @model.errors.on(:input).should == [ 'Input must be greater than or equal to 1' ]
     end
   end
 
@@ -78,7 +75,7 @@ describe DataMapper::Validate::Fixtures::MathematicalFunction do
     it_should_behave_like "invalid model"
 
     it "notices 'greater than or equal to 1' in the error message" do
-      @model.errors.on(:input).should include("Input must be greater than or equal to 1")
+      @model.errors.on(:input).should == [ 'Input must be greater than or equal to 1' ]
     end
   end
 
@@ -90,7 +87,7 @@ describe DataMapper::Validate::Fixtures::MathematicalFunction do
     it_should_behave_like "invalid model"
 
     it "notices 'greater than or equal to 1' in the error message" do
-      @model.errors.on(:input).should include("Input must be greater than or equal to 1")
+      @model.errors.on(:input).should == [ 'Input must be greater than or equal to 1' ]
     end
   end
 
@@ -148,7 +145,7 @@ describe DataMapper::Validate::Fixtures::MathematicalFunction do
     it_should_behave_like "invalid model"
 
     it "uses overriden error message" do
-      @model.errors.on(:output).should include("Negative values or zero only, please")
+      @model.errors.on(:output).should == [ 'Negative values or zero only, please' ]
     end
   end
 
@@ -161,7 +158,7 @@ describe DataMapper::Validate::Fixtures::MathematicalFunction do
     it_should_behave_like "invalid model"
 
     it "uses overriden error message" do
-      @model.errors.on(:output).should include("Negative values or zero only, please")
+      @model.errors.on(:output).should == [ 'Negative values or zero only, please' ]
     end
   end
 end

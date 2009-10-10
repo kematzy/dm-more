@@ -1,9 +1,5 @@
-require 'pathname'
-
-__dir__ = Pathname(__FILE__).dirname.expand_path
-require __dir__.parent.parent + 'spec_helper'
-require __dir__ + 'spec_helper'
-
+require 'spec_helper'
+require 'integration/format_validator/spec_helper'
 
 describe DataMapper::Validate::Fixtures::BillOfLading do
   def valid_attributes
@@ -27,7 +23,7 @@ describe DataMapper::Validate::Fixtures::BillOfLading do
     it_should_behave_like 'invalid model'
 
     it "has a meaningful error message" do
-      @model.errors.on(:code).should include("Code format is invalid")
+      @model.errors.on(:code).should  == [ 'Code format is invalid' ]
     end
   end
 end

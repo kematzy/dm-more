@@ -1,28 +1,24 @@
-require 'pathname'
+require 'dm-validations/exceptions'
+require 'dm-validations/validation_errors'
+require 'dm-validations/contextual_validators'
+require 'dm-validations/auto_validate'
 
-dir = Pathname(__FILE__).dirname.expand_path / 'dm-validations'
+require 'dm-validations/validators/generic_validator'
+require 'dm-validations/validators/required_field_validator'
+require 'dm-validations/validators/primitive_validator'
+require 'dm-validations/validators/absent_field_validator'
+require 'dm-validations/validators/confirmation_validator'
+require 'dm-validations/validators/format_validator'
+require 'dm-validations/validators/length_validator'
+require 'dm-validations/validators/within_validator'
+require 'dm-validations/validators/numeric_validator'
+require 'dm-validations/validators/method_validator'
+require 'dm-validations/validators/block_validator'
+require 'dm-validations/validators/uniqueness_validator'
+require 'dm-validations/validators/acceptance_validator'
 
-require dir / 'exceptions'
-require dir / 'validation_errors'
-require dir / 'contextual_validators'
-require dir / 'auto_validate'
-
-require dir / 'validators' / 'generic_validator'
-require dir / 'validators' / 'required_field_validator'
-require dir / 'validators' / 'primitive_validator'
-require dir / 'validators' / 'absent_field_validator'
-require dir / 'validators' / 'confirmation_validator'
-require dir / 'validators' / 'format_validator'
-require dir / 'validators' / 'length_validator'
-require dir / 'validators' / 'within_validator'
-require dir / 'validators' / 'numeric_validator'
-require dir / 'validators' / 'method_validator'
-require dir / 'validators' / 'block_validator'
-require dir / 'validators' / 'uniqueness_validator'
-require dir / 'validators' / 'acceptance_validator'
-
-require dir / 'support' / 'context'
-require dir / 'support' / 'object'
+require 'dm-validations/support/context'
+require 'dm-validations/support/object'
 
 module DataMapper
   module Validate
@@ -59,6 +55,13 @@ module DataMapper
       end
     end
 
+    chainable do
+      def save_self(*)
+        return false unless validation_context_stack.empty? || valid?(current_validation_context)
+        super
+      end
+    end
+
     # Return the ValidationErrors
     #
     def errors
@@ -86,33 +89,8 @@ module DataMapper
       klass.validators.execute(context, self)
     end
 
-    # Begin a recursive walk of the model checking validity
-    #
-    def all_valid?(context = :default)
-      recursive_valid?(self, context, true)
-    end
-
-    # Do recursive validity checking
-    #
-    def recursive_valid?(target, context, state)
-      valid = state
-      target.instance_variables.each do |ivar|
-        ivar_value = target.instance_variable_get(ivar)
-        if ivar_value.validatable?
-          valid = valid && recursive_valid?(ivar_value, context, valid)
-        elsif ivar_value.respond_to?(:each)
-          ivar_value.each do |item|
-            if item.validatable?
-              valid = valid && recursive_valid?(item, context, valid)
-            end
-          end
-        end
-      end
-      return valid && target.valid?
-    end
-
     def validation_property_value(name)
-      respond_to?(name, true) ? send(name) : nil
+      __send__(name) if respond_to?(name, true)
     end
 
     # Get the corresponding Resource property, if it exists.
@@ -122,27 +100,6 @@ module DataMapper
     def validation_property(field_name)
       if respond_to?(:model) && (properties = model.properties(repository.name)) && properties.named?(field_name)
         properties[field_name]
-      end
-    end
-
-    def validation_association_keys(name)
-      if model.relationships.has_key?(name)
-        result = []
-        relation = model.relationships[name]
-        relation.child_key.each do |key|
-          result << key.name
-        end
-        return result
-      end
-      nil
-    end
-
-    private
-
-    chainable do
-      def save_self(*)
-        return false unless validation_context_stack.empty? || valid?(current_validation_context)
-        super
       end
     end
 
@@ -164,18 +121,20 @@ module DataMapper
       # Return the set of contextual validators or create a new one
       #
       def validators
-        @validations ||= ContextualValidators.new
+        @validators ||= ContextualValidators.new
       end
+
+      private
 
       # Clean up the argument list and return a opts hash, including the
       # merging of any default opts. Set the context to default if none is
       # provided. Also allow :context to be aliased to :on, :when & group
       #
       def opts_from_validator_args(args, defaults = nil)
-        opts = args.last.kind_of?(Hash) ? args.pop : {}
+        opts = args.last.kind_of?(Hash) ? args.pop.dup : {}
         context = opts.delete(:group) || opts.delete(:on) || opts.delete(:when) || opts.delete(:context) || :default
-        opts[:context] = context
-        opts.merge!(defaults) unless defaults.nil?
+        opts[:context] = Array(context)
+        opts.update(defaults) unless defaults.nil?
         opts
       end
 
@@ -184,21 +143,12 @@ module DataMapper
       # if it does not already exist
       #
       def create_context_instance_methods(context)
-        name = "valid_for_#{context.to_s}?"           # valid_for_signup?
-        if !instance_methods.include?(name)
+        name = "valid_for_#{context.to_s}?"
+        unless respond_to?(:resource_method_defined) ? resource_method_defined?(name) : instance_methods.include?(name)
           class_eval <<-RUBY, __FILE__, __LINE__ + 1
-            def #{name}                               # def valid_for_signup?
-              valid?(#{context.to_sym.inspect})       #   valid?(:signup)
-            end                                       # end
-          RUBY
-        end
-
-        all = "all_valid_for_#{context.to_s}?"        # all_valid_for_signup?
-        if !instance_methods.include?(all)
-          class_eval <<-RUBY, __FILE__, __LINE__ + 1
-            def #{all}                                # def all_valid_for_signup?
-              all_valid?(#{context.to_sym.inspect})   #   all_valid?(:signup)
-            end                                       # end
+            def #{name}                          # def valid_for_signup?
+              valid?(#{context.to_sym.inspect})  #   valid?(:signup)
+            end                                  # end
           RUBY
         end
       end
@@ -215,21 +165,15 @@ module DataMapper
       #
       # @param [Class] klazz
       #    Validator class, example: DataMapper::Validate::LengthValidator
-      def add_validator_to_context(opts, fields, klazz)
+      def add_validator_to_context(opts, fields, validator_class)
         fields.each do |field|
-          validator = klazz.new(field, opts.dup)
-          if opts[:context].is_a?(Symbol)
-            unless validators.context(opts[:context]).include?(validator)
-              validators.context(opts[:context]) << validator
-              create_context_instance_methods(opts[:context])
-            end
-          elsif opts[:context].is_a?(Array)
-            opts[:context].each do |c|
-              unless validators.context(c).include?(validator)
-                validators.context(c) << validator
-                create_context_instance_methods(c)
-              end
-            end
+          validator = validator_class.new(field, opts.dup)
+
+          opts[:context].each do |context|
+            validator_contexts = validators.context(context)
+            next if validator_contexts.include?(validator)
+            validator_contexts << validator
+            create_context_instance_methods(context)
           end
         end
       end

@@ -15,17 +15,16 @@ module DataMapper
       end
 
       def call(target)
-        unless valid?(target)
-          error_message = @options[:message] || ValidationErrors.default_error_message(:confirmation, field_name)
-          add_error(target, error_message, field_name)
-          return false
-        end
+        return true if valid?(target)
 
-        return true
+        error_message = @options[:message] || ValidationErrors.default_error_message(:confirmation, field_name)
+        add_error(target, error_message, field_name)
+
+        false
       end
 
       def valid?(target)
-        field_value = target.send(field_name)
+        field_value = target.validation_property_value(field_name)
         return true if @options[:allow_nil] && field_value.blank?
         return false if !@options[:allow_nil] && field_value.blank?
 

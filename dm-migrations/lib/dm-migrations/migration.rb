@@ -1,7 +1,6 @@
-require 'pathname'
 require 'benchmark'
 
-require Pathname(__FILE__).dirname.expand_path + 'sql'
+require 'dm-migrations/sql'
 
 module DataMapper
   class DuplicateMigrationNameError < StandardError
@@ -178,7 +177,7 @@ module DataMapper
     # Fetch the record for this migration out of the migration_info table
     def migration_record
       return [] unless migration_info_table_exists?
-      @adapter.query("SELECT #{migration_name_column} FROM #{migration_info_table} WHERE #{migration_name_column} = #{quoted_name}")
+      @adapter.select("SELECT #{migration_name_column} FROM #{migration_info_table} WHERE #{migration_name_column} = #{quoted_name}")
     end
 
     # True if the migration needs to be run

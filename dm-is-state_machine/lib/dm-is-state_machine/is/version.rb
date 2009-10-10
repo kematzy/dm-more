@@ -1,7 +1,7 @@
 module DataMapper
   module Is
     module StateMachine
-      VERSION = '0.10.0'.freeze
+      VERSION = '0.10.2'.freeze
     end
   end
 end

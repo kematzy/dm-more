@@ -1,7 +1,5 @@
-require 'pathname'
-__dir__ = Pathname(__FILE__).dirname.expand_path
-require __dir__.parent.parent + 'spec_helper'
-require __dir__ + 'spec_helper'
+require 'spec_helper'
+require 'integration/block_validator/spec_helper'
 
 describe DataMapper::Validate::Fixtures::G3Concert do
   before :all do
@@ -17,7 +15,7 @@ describe DataMapper::Validate::Fixtures::G3Concert do
     it_should_behave_like "invalid model"
 
     it "uses error messages returned by the validation block" do
-      @model.errors.on(:participants).should include("this G3 is probably yet to take place")
+      @model.errors.on(:participants).should == [ 'this G3 is probably yet to take place' ]
     end
   end
 

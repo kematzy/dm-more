@@ -1,8 +1,5 @@
-require 'pathname'
-__dir__ = Pathname(__FILE__).dirname.expand_path
-
-require __dir__.parent.parent + 'spec_helper'
-require __dir__ + 'spec_helper'
+require 'spec_helper'
+require 'integration/numeric_validator/spec_helper'
 
 describe City do
   before(:each) do
@@ -81,7 +78,7 @@ describe City do
 
     it "has a meaningful error message on for the property" do
       @city.valid?
-      @city.errors.on(:founded_in).should include("Foundation year must be an integer")
+      @city.errors.on(:founded_in).should == [ 'Foundation year must be an integer' ]
     end
   end
 end

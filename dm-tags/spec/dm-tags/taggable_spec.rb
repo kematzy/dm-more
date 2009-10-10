@@ -1,5 +1,4 @@
-require 'pathname'
-require Pathname(__FILE__).dirname.expand_path.parent + 'spec_helper'
+require 'spec_helper'
 
 describe "Taggable" do
   before do
@@ -49,7 +48,7 @@ describe "Taggable" do
     @taggable.tags.sort_by{|tag| tag.id}.should == [tag1, tag2]
     @taggable.tag_list = 'tag3, tag4'
     @taggable.save.should be_true
-    @taggable = TaggedModel.first
+    @taggable = @taggable.model.get(*@taggable.key)
     @taggable.tags.sort_by{|tag| tag.id}.should == [tag3, Tag.first(:name => 'tag4')]
     @taggable.skills.sort_by{|skill| skill.id}.should_not == [tag3, Tag.first(:name => 'tag4')]
   end

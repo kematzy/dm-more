@@ -7,126 +7,119 @@ module DataMapper
     # @since  0.9
     class NumericValidator < GenericValidator
 
-      def initialize(field_name, options={})
-        super
+      def call(target)
+        value = target.validation_property_value(field_name)
+        return true if allow_nil? && value.blank?
 
-        @options[:integer_only] = false unless @options.has_key?(:integer_only)
+        errors = []
+
+        validate_with(integer_only? ? :integer : :numeric, value, errors)
+
+        add_errors(target, errors)
+
+        # if the number is invalid, skip further tests
+        return false if errors.any?
+
+        [ :gt, :lt, :gte, :lte, :eq, :ne ].each do |validation_type|
+          validate_with(validation_type, value, errors)
+        end
+
+        add_errors(target, errors)
+
+        errors.empty?
       end
 
-      def call(target)
-        value = target.send(field_name)
-        return true if @options[:allow_nil] && value.blank?
+      private
 
-        value = case value
-          when Float      then BigDecimal.new(value.to_s).to_s('F') # Avoid Scientific Notation in Float to_s
+      def allow_nil?
+        options.fetch(:allow_nil, false)
+      end
+
+      def integer_only?
+        options.fetch(:integer_only, false)
+      end
+
+      def value_as_string(value)
+        case value
+          when Float      then value.to_d.to_s('F')  # Avoid Scientific Notation in Float to_s
           when BigDecimal then value.to_s('F')
           else value.to_s
         end
+      end
 
-        error_message = @options[:message]
-        precision     = @options[:precision]
-        scale         = @options[:scale]
-        eq            = @options[:eq] || @options[:equal] || @options[:equals] || @options[:exactly]
-        gt            = @options[:gt]
-        lt            = @options[:lt]
-        ne            = @options[:ne]
-        gte           = @options[:gte]
-        lte           = @options[:lte]
+      def add_errors(target, errors)
+        return if errors.empty?
 
-        if @options[:integer_only]
-          has_valid_number = true if value =~ /\A[+-]?\d+\z/
-          error_message ||= ValidationErrors.default_error_message(:not_an_integer, field_name)
+        if options.key?(:message)
+          add_error(target, options[:message], field_name)
         else
-          # FIXME: if precision and scale are not specified, can we assume that it is an integer?
-          #        probably not, as floating point numbers don't have hard
-          #        defined scale. the scale floats with the length of the
-          #        integral and precision. Ie. if precision = 10 and integral
-          #        portion of the number is 9834 (4 digits), the max scale will
-          #        be 6 (10 - 4). But if the integral length is 1, max scale
-          #        will be (10 - 1) = 9, so 1.234567890.
-          #        In MySQL somehow you can hard-define scale on floats. Not
-          #        quite sure how that works...
-          if precision && scale
-            # handles both Float when it has scale specified and BigDecimal
-            if precision > scale && scale > 0
-              has_valid_number = true if value =~ /\A[+-]?(?:\d{1,#{precision - scale}}|\d{0,#{precision - scale}}\.\d{1,#{scale}})\z/
-            elsif precision > scale && scale == 0
-              has_valid_number = true if value =~ /\A[+-]?(?:\d{1,#{precision}}(?:\.0)?)\z/
-            elsif precision == scale
-              has_valid_number = true if value =~ /\A[+-]?(?:0(?:\.\d{1,#{scale}})?)\z/
-            else
-              raise ArgumentError, "Invalid precision #{precision.inspect} and scale #{scale.inspect} for #{field_name} (value: #{value.inspect} #{value.class})"
-            end
-          elsif precision && scale.nil?
-            # for floats, if scale is not set
+          errors.each do |error_message|
+            add_error(target, error_message, field_name)
+          end
+        end
+      end
 
-            # total number of digits is less or equal precision
-            has_valid_number = true if value.gsub(/[^\d]/, '').length <= precision
+      def validate_with(validation_type, value, errors)
+        send("validate_#{validation_type}", value, errors)
+      end
 
-            # number of digits before decimal == precision, and the number is x.0. same as scale = 0
-            has_valid_number = true if value =~ /\A[+-]?(?:\d{1,#{precision}}(?:\.0)?)\z/
+      def validate_with_comparison(value, cmp, expected, error_message_name, errors, negated = false)
+        return if expected.nil?
+
+        comparison = value.send(cmp, expected)
+        return if negated ? !comparison : comparison
+
+        errors << ValidationErrors.default_error_message(error_message_name, field_name, expected)
+      end
+
+      def validate_integer(value, errors)
+        validate_with_comparison(value_as_string(value), :=~, /\A[+-]?\d+\z/, :not_an_integer, errors)
+      end
+
+      def validate_numeric(value, errors)
+        precision = options[:precision]
+        scale     = options[:scale]
+
+        regexp = if precision && scale
+          if precision > scale && scale == 0
+            /\A[+-]?(?:\d{1,#{precision}}(?:\.0)?)\z/
+          elsif precision > scale
+            /\A[+-]?(?:\d{1,#{precision - scale}}|\d{0,#{precision - scale}}\.\d{1,#{scale}})\z/
+          elsif precision == scale
+            /\A[+-]?(?:0(?:\.\d{1,#{scale}})?)\z/
           else
-            has_valid_number = true if value =~ /\A[+-]?(?:\d+|\d*\.\d+)\z/
+            raise ArgumentError, "Invalid precision #{precision.inspect} and scale #{scale.inspect} for #{field_name} (value: #{value.inspect} #{value.class})"
           end
-          error_message ||= ValidationErrors.default_error_message(:not_a_number, field_name)
-        end
-
-        comparisons_pass = true
-        if gt
-          unless value.to_f > gt.to_f
-            comparisons_pass         = false
-            comparison_error_message = '%s must be a number greater than %s'.t(humanized_field_name, gt)
-            add_error(target, comparison_error_message, @field_name)
-          end
-        end
-
-        if lt
-          unless value.to_f < lt.to_f
-            comparisons_pass         = false
-            comparison_error_message = '%s must be a number less than %s'.t(humanized_field_name, lt)
-            add_error(target, comparison_error_message, @field_name)
-          end
-        end
-
-        if gte
-          unless value.to_f >= gte.to_f
-            comparisons_pass         = false
-            comparison_error_message = '%s must be a number greater than or equal to %s'.t(humanized_field_name, gte)
-            add_error(target, comparison_error_message, @field_name)
-          end
-        end
-
-        if lte
-          unless value.to_f <= lte.to_f
-            comparisons_pass         = false
-            comparison_error_message = '%s must be a number less than or equal to %s'.t(humanized_field_name, lte)
-            add_error(target, comparison_error_message, @field_name)
-          end
-        end
-
-        if eq
-          unless value.to_f == eq.to_f
-            comparisons_pass         = false
-            comparison_error_message = '%s must be a number equal to %s'.t(humanized_field_name, eq)
-            add_error(target, comparison_error_message, @field_name)
-          end
-        end
-
-        if ne
-          unless value.to_f != ne.to_f
-            comparisons_pass         = false
-            comparison_error_message = '%s must be a number not equal to %s'.t(humanized_field_name, ne)
-            add_error(target, comparison_error_message, @field_name)
-          end
-        end
-
-
-        if has_valid_number && comparisons_pass
-          return true
         else
-          add_error(target, error_message, @field_name)
-          return false
+          /\A[+-]?(?:\d+|\d*\.\d+)\z/
         end
+
+        validate_with_comparison(value_as_string(value), :=~, regexp, :not_a_number, errors)
+      end
+
+      def validate_gt(value, errors)
+        validate_with_comparison(value, :>, options[:gt], :greater_than, errors)
+      end
+
+      def validate_lt(value, errors)
+        validate_with_comparison(value, :<, options[:lt], :less_than, errors)
+      end
+
+      def validate_gte(value, errors)
+        validate_with_comparison(value, :>=, options[:gte], :greater_than_or_equal_to, errors)
+      end
+
+      def validate_lte(value, errors)
+        validate_with_comparison(value, :<=, options[:lte], :less_than_or_equal_to, errors)
+      end
+
+      def validate_eq(value, errors)
+        eq = options[:eq] || options[:equal] || options[:equals] || options[:exactly]
+        validate_with_comparison(value, :==, eq, :equal_to, errors)
+      end
+
+      def validate_ne(value, errors)
+        validate_with_comparison(value, :==, options[:ne], :not_equal_to, errors, true)
       end
     end # class NumericValidator
 

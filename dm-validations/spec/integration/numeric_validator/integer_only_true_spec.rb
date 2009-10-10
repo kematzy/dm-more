@@ -1,8 +1,5 @@
-require 'pathname'
-__dir__ = Pathname(__FILE__).dirname.expand_path
-
-require __dir__.parent.parent + 'spec_helper'
-require __dir__ + 'spec_helper'
+require 'spec_helper'
+require 'integration/numeric_validator/spec_helper'
 
 describe Country do
   before(:each) do
@@ -86,7 +83,7 @@ describe Country do
 
     it "has a meaningful error message on for the property" do
       @country.valid?
-      @country.errors.on(:area).should include("Please use integers to specify area")
+      @country.errors.on(:area).should == [ 'Please use integers to specify area' ]
     end
   end
 end

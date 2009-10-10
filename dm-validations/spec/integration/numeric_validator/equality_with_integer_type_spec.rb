@@ -1,9 +1,5 @@
-require 'pathname'
-__dir__ = Pathname(__FILE__).dirname.expand_path
-
-require __dir__.parent.parent + 'spec_helper'
-require __dir__ + 'spec_helper'
-
+require 'spec_helper'
+require 'integration/numeric_validator/spec_helper'
 
 describe DataMapper::Validate::Fixtures::LerneanHydra do
   describe "with valid set of attributes" do
@@ -35,7 +31,7 @@ describe DataMapper::Validate::Fixtures::LerneanHydra do
     it_should_behave_like "invalid model"
 
     it "has a meaningful error message" do
-      @model.errors.on(:head_count).should include("Lernean hydra is said to have exactly 9 heads")
+      @model.errors.on(:head_count).should == [ 'Lernean hydra is said to have exactly 9 heads' ]
     end
   end
 end

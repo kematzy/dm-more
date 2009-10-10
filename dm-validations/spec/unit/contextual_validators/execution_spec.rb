@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
-require 'pathname'
-
-__dir__ = Pathname(__FILE__).dirname.expand_path
-require __dir__.parent.parent + 'spec_helper'
-require __dir__ + 'spec_helper'
+require 'spec_helper'
+require 'unit/contextual_validators/spec_helper'
 
 describe DataMapper::Validate::ContextualValidators do
   before :all do
@@ -16,13 +13,6 @@ describe DataMapper::Validate::ContextualValidators do
       @validator_two = DataMapper::Validate::WithinValidator.new(:operating_system, :set => ["Mac OS X", "Linux", "FreeBSD", "Solaris"])
 
       @model.context(:default) << @validator_one << @validator_two
-    end
-
-    describe "when context was never referred to before" do
-      it "raises ArgumentError" do
-        lambda { @model.execute(:some_unknown_context, Object.new) }.
-          should raise_error(ArgumentError, /validation context some_unknown_context doesn't seem to be defined/)
-      end
     end
 
 

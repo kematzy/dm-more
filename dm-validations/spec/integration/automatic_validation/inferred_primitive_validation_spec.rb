@@ -1,9 +1,5 @@
-require 'pathname'
-
-__dir__ = Pathname(__FILE__).dirname.expand_path
-require __dir__.parent.parent + 'spec_helper'
-require __dir__ + 'spec_helper'
-
+require 'spec_helper'
+require 'integration/automatic_validation/spec_helper'
 
 describe SailBoat do
   before :all do
@@ -18,7 +14,7 @@ describe SailBoat do
 
     it "is invalid" do
       @model.should_not be_valid_for_primitive_test
-      @model.errors.on(:build_date).should include('Build date must be of type Date')
+      @model.errors.on(:build_date).should == [ 'Build date must be of type Date' ]
     end
   end
 end

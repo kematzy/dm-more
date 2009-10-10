@@ -1,9 +1,5 @@
-require 'pathname'
-__dir__ = Pathname(__FILE__).dirname.expand_path
-
-require __dir__.parent.parent + 'spec_helper'
-require __dir__ + 'spec_helper'
-
+require 'spec_helper'
+require 'integration/numeric_validator/spec_helper'
 
 describe DataMapper::Validate::Fixtures::BasketballCourt do
   before :all do
@@ -33,7 +29,7 @@ describe DataMapper::Validate::Fixtures::BasketballCourt do
     it_should_behave_like "invalid model"
 
     it "has a meaningful error message" do
-      @model.errors.on(:length).should include("Length must be a number greater than or equal to 15.0")
+      @model.errors.on(:length).should == [ 'Length must be greater than or equal to 15.0' ]
     end
   end
 end

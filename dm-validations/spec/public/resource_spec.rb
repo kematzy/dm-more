@@ -1,4 +1,4 @@
-require File.expand_path(File.join(File.dirname(__FILE__), '..', 'spec_helper'))
+require 'spec_helper'
 
 describe DataMapper::Resource do
   before :all do
@@ -51,7 +51,7 @@ describe DataMapper::Resource do
         # create a record that will be a dupe when User#update is executed below
         DataMapper::Validate::Fixtures::User.create(attributes).should be_saved
 
-        @resource = DataMapper::Validate::Fixtures::User.new
+        @resource = DataMapper::Validate::Fixtures::User.create(attributes.merge(:user_name => 'other'))
 
         @response = @resource.update(attributes, :signing_up_for_department_account)
       end

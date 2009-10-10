@@ -1,13 +1,9 @@
-require 'pathname'
-__dir__ = Pathname(__FILE__).dirname.expand_path
-
-# global first, then local to length validators
-require __dir__.parent.parent + "spec_helper"
-require __dir__ + 'spec_helper'
+require 'spec_helper'
+require 'integration/length_validator/spec_helper'
 
 describe "barcode with invalid code length", :shared => true do
   it "has a meaninful error message with length restrictions mentioned" do
-    @model.errors.on(:code).should include("Code must be at most 10 characters long")
+    @model.errors.on(:code).should == [ 'Code must be at most 10 characters long' ]
   end
 end
 

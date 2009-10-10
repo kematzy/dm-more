@@ -1,8 +1,5 @@
-require 'pathname'
-
-__dir__ = Pathname(__FILE__).dirname.expand_path
-require __dir__.parent.parent + 'spec_helper'
-require __dir__ + 'spec_helper'
+require 'spec_helper'
+require 'integration/automatic_validation/spec_helper'
 
 describe SailBoat, "with a :format option on a property" do
   before :all do
@@ -30,7 +27,7 @@ describe SailBoat, "with a :format option on a property" do
     end
 
     it "has a meaningful error message" do
-      @model.errors.on(:code).should include('Code has an invalid format')
+      @model.errors.on(:code).should == [ 'Code has an invalid format' ]
     end
   end
 end

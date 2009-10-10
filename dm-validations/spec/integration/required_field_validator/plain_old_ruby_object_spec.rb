@@ -1,8 +1,5 @@
-require 'pathname'
-__dir__ = Pathname(__FILE__).dirname.expand_path
-
-require __dir__.parent.parent + 'spec_helper'
-require __dir__ + 'spec_helper'
+require 'spec_helper'
+require 'integration/required_field_validator/spec_helper'
 
 if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
   describe "A plain old Ruby object (not a DM resource)" do
@@ -22,9 +19,9 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
 
     it "should fail validation with empty, nil, or blank fields" do
       @pc.should_not be_valid
-      @pc.errors.on(:empty).should    include("Empty must not be blank")
-      @pc.errors.on(:nil).should      include("Nil must not be blank")
-      @pc.errors.on(:accessor).should include("Accessor must not be blank")
+      @pc.errors.on(:empty).should    == [ 'Empty must not be blank' ]
+      @pc.errors.on(:nil).should      == [ 'Nil must not be blank' ]
+      @pc.errors.on(:accessor).should == [ 'Accessor must not be blank' ]
     end
 
     it "giving accessor a value should remove validation error" do

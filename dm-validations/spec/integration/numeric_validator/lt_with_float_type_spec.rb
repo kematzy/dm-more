@@ -1,9 +1,5 @@
-require 'pathname'
-__dir__ = Pathname(__FILE__).dirname.expand_path
-
-require __dir__.parent.parent + 'spec_helper'
-require __dir__ + 'spec_helper'
-
+require 'spec_helper'
+require 'integration/numeric_validator/spec_helper'
 
 describe DataMapper::Validate::Fixtures::BasketballCourt do
   before :all do
@@ -33,7 +29,7 @@ describe DataMapper::Validate::Fixtures::BasketballCourt do
     it_should_behave_like "invalid model"
 
     it "has a meaningful error message" do
-      @model.errors.on(:three_point_line_distance).should include("Three point line distance must be a number less than 7.24")
+      @model.errors.on(:three_point_line_distance).should == [ 'Three point line distance must be less than 7.24' ]
     end
   end
 end

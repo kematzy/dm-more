@@ -1,5 +1,4 @@
-require 'pathname'
-require Pathname(__FILE__).dirname.expand_path.parent + '../spec_helper'
+require 'spec_helper'
 
 describe DataMapper::Validate::Fixtures::Product do
   before :all do
@@ -18,7 +17,7 @@ describe DataMapper::Validate::Fixtures::Product do
     it_should_behave_like "invalid model"
 
     it "has a meaningful error message" do
-      @model.errors.on(:company).should include("Company must not be blank")
+      @model.errors.on(:company).should == [ 'Company must not be blank' ]
     end
   end
 end

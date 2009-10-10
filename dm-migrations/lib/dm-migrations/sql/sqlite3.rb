@@ -1,5 +1,4 @@
-require 'pathname'
-require Pathname(__FILE__).dirname.expand_path + 'table'
+require 'dm-migrations/sql/table'
 
 module SQL
   module Sqlite3
@@ -29,7 +28,7 @@ module SQL
     class Table < SQL::Table
       def initialize(adapter, table_name)
         @columns = []
-        adapter.query_table(table_name).each do |col_struct|
+        adapter.table_info(table_name).each do |col_struct|
           @columns << SQL::Sqlite3::Column.new(col_struct)
         end
       end

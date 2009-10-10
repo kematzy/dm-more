@@ -1,8 +1,5 @@
-require 'pathname'
-
-__dir__ = Pathname(__FILE__).dirname.expand_path
-require __dir__.parent.parent + 'spec_helper'
-require __dir__ + 'spec_helper'
+require 'spec_helper'
+require 'integration/absent_field_validator/spec_helper'
 
 describe DataMapper::Validate::Fixtures::Kayak do
   before :all do
@@ -20,7 +17,7 @@ describe DataMapper::Validate::Fixtures::Kayak do
     end
 
     it "has meaningful error message" do
-      @kayak.errors.on(:salesman).should include('Salesman must be absent')
+      @kayak.errors.on(:salesman).should == [ 'Salesman must be absent' ]
     end
   end
 
@@ -83,7 +80,7 @@ describe DataMapper::Validate::Fixtures::Pirogue do
     end
 
     it "has meaningful error message" do
-      @kayak.errors.on(:salesman).should include('Salesman must be absent')
+      @kayak.errors.on(:salesman).should == [ 'Salesman must be absent' ]
     end
   end
 end

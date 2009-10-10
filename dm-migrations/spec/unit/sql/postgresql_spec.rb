@@ -1,5 +1,4 @@
-require 'pathname'
-require Pathname(__FILE__).dirname.expand_path + '../../spec_helper'
+require 'spec_helper'
 
 # a dummy class to include the module into
 class PostgresqlExtension
@@ -33,7 +32,7 @@ describe "SQLite3 Extensions" do
     before do
       @cs1 = mock('Column Struct')
       @cs2 = mock('Column Struct')
-      @adapter = mock('adapter', :query => [])
+      @adapter = mock('adapter', :select => [])
       @adapter.stub!(:query_table).with('users').and_return([@cs1, @cs2])
 
       @col1 = mock('SQLite3 Column')

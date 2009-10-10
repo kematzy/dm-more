@@ -1,9 +1,5 @@
-require 'pathname'
-
-__dir__ = Pathname(__FILE__).dirname.expand_path
-require __dir__.parent.parent + 'spec_helper'
-require __dir__ + 'spec_helper'
-
+require 'spec_helper'
+require 'integration/automatic_validation/spec_helper'
 
 describe SailBoat do
   before :all do
@@ -20,7 +16,7 @@ describe SailBoat do
     # has validates_is_present for name thanks to :nullable => false
     it "is invalid" do
       @model.should_not be_valid_for_presence_test
-      @model.errors.on(:name).should include('Name must not be blank')
+      @model.errors.on(:name).should == [ 'Name must not be blank' ]
     end
   end
 end

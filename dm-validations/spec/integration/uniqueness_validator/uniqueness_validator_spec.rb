@@ -1,8 +1,5 @@
-require 'pathname'
-
-__dir__ = Pathname(__FILE__).dirname.expand_path
-require __dir__.parent.parent + 'spec_helper'
-require __dir__ + 'spec_helper'
+require 'spec_helper'
+require 'integration/uniqueness_validator/spec_helper'
 
 
 if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
@@ -69,7 +66,7 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
 
       it "has a meaningful error message" do
         @model.valid?
-        @model.errors.on(:domain).should include("Domain is already taken")
+        @model.errors.on(:domain).should == [ 'Domain is already taken' ]
       end
     end
 
@@ -109,7 +106,7 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
       end
 
       it "has a meaningful error message" do
-        @model.errors.on(:user_name).should include('User name is already taken')
+        @model.errors.on(:user_name).should == [ 'User name is already taken' ]
       end
     end
 
@@ -124,7 +121,7 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
       end
 
       it "has a meaningful error message" do
-        @model.errors.on(:user_name).should include('User name is already taken')
+        @model.errors.on(:user_name).should == [ 'User name is already taken' ]
       end
     end
   end # describe DataMapper::Validate::Fixtures::User

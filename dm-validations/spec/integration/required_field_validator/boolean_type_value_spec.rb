@@ -1,8 +1,5 @@
-require 'pathname'
-__dir__ = Pathname(__FILE__).dirname.expand_path
-
-require __dir__.parent.parent + 'spec_helper'
-require __dir__ + 'spec_helper'
+require 'spec_helper'
+require 'integration/required_field_validator/spec_helper'
 
 if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
   # keep in mind any ScmOperation has a default value for brand property
@@ -39,13 +36,13 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
       it "is not valid for pushing" do
         @operation.should_not be_valid_for_pushing
         @operation.errors.on(:network_connection).
-          first[:pushing].should include("cannot push without network connectivity")
+          first[:pushing].should == 'though git is advanced, it cannot push without network connectivity'
       end
 
       it "is not valid for pulling" do
         @operation.should_not be_valid_for_pulling
         @operation.errors.on(:network_connection).
-          first[:pulling].should include("you must have network connectivity to pull from others")
+          first[:pulling].should == 'you must have network connectivity to pull from others'
       end
 
       it "is not valid in default context" do

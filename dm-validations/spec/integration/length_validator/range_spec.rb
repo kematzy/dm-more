@@ -1,10 +1,5 @@
-require 'pathname'
-__dir__ = Pathname(__FILE__).dirname.expand_path
-
-# global first, then local to length validators
-require __dir__.parent.parent + "spec_helper"
-require __dir__ + 'spec_helper'
-
+require 'spec_helper'
+require 'integration/length_validator/spec_helper'
 
 describe DataMapper::Validate::Fixtures::EthernetFrame do
   before :all do
@@ -23,7 +18,7 @@ describe DataMapper::Validate::Fixtures::EthernetFrame do
     it_should_behave_like "invalid model"
 
     it "has error message with range bounds" do
-      @model.errors.on(:payload).should include('Payload must be between 46 and 1500 characters long')
+      @model.errors.on(:payload).should == [ 'Payload must be between 46 and 1500 characters long' ]
     end
   end
 
@@ -37,7 +32,7 @@ describe DataMapper::Validate::Fixtures::EthernetFrame do
     it_should_behave_like "invalid model"
 
     it "has error message with range bounds" do
-      @model.errors.on(:payload).should include('Payload must be between 46 and 1500 characters long')
+      @model.errors.on(:payload).should == [ 'Payload must be between 46 and 1500 characters long' ]
     end
   end
 
@@ -51,7 +46,7 @@ describe DataMapper::Validate::Fixtures::EthernetFrame do
     it_should_behave_like "invalid model"
 
     it "has error message with range bounds" do
-      @model.errors.on(:payload).should include('Payload must be between 46 and 1500 characters long')
+      @model.errors.on(:payload).should == [ 'Payload must be between 46 and 1500 characters long' ]
     end
   end
 
@@ -69,7 +64,7 @@ describe DataMapper::Validate::Fixtures::EthernetFrame do
     it_should_behave_like "invalid model"
 
     it "has error message with range bounds" do
-      @model.errors.on(:payload).should include('Payload must be between 46 and 1500 characters long')
+      @model.errors.on(:payload).should == [ 'Payload must be between 46 and 1500 characters long' ]
     end
   end
 

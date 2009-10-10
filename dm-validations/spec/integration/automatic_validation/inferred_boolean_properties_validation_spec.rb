@@ -1,8 +1,5 @@
-require 'pathname'
-
-__dir__ = Pathname(__FILE__).dirname.expand_path
-require __dir__.parent.parent + 'spec_helper'
-require __dir__ + 'spec_helper'
+require 'spec_helper'
+require 'integration/automatic_validation/spec_helper'
 
 describe "A model with a Boolean property" do
   before :all do
@@ -65,7 +62,7 @@ describe "A model with a non-nullable Boolean property" do
     it_should_behave_like "invalid model"
 
     it "has a meaningful error message" do
-      @model.errors.on(:bool).should include('Bool must not be nil')
+      @model.errors.on(:bool).should == [ 'Bool must not be nil' ]
     end
   end
 end
@@ -101,7 +98,7 @@ describe "A model with a non-nullable paranoid Boolean property" do
     it_should_behave_like "invalid model"
 
     it "has a meaningful error message" do
-      @model.errors.on(:bool).should include('Bool must not be nil')
+      @model.errors.on(:bool).should == [ 'Bool must not be nil' ]
     end
   end
 end

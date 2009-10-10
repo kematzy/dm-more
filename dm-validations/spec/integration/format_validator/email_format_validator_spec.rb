@@ -1,9 +1,5 @@
-require 'pathname'
-
-__dir__ = Pathname(__FILE__).dirname.expand_path
-require __dir__.parent.parent + 'spec_helper'
-require __dir__ + 'spec_helper'
-
+require 'spec_helper'
+require 'integration/format_validator/spec_helper'
 
 describe DataMapper::Validate::Fixtures::BillOfLading do
   def valid_attributes
@@ -67,12 +63,12 @@ describe DataMapper::Validate::Fixtures::BillOfLading do
 
     bol = DataMapper::Validate::Fixtures::BillOfLading.new(valid_attributes.except(:url))
     bol.should_not be_valid
-    bol.errors.on(:url).should include('Url has an invalid format')
+    bol.errors.on(:url).should == [ 'Url has an invalid format' ]
 
     bad.map do |e|
       bol.url = e
       bol.valid?
-      bol.errors.on(:url).should include('Url has an invalid format')
+      bol.errors.on(:url).should == [ 'Url has an invalid format' ]
     end
 
     good.map do |e|
@@ -110,7 +106,7 @@ describe DataMapper::Validate::Fixtures::BillOfLading do
 
       it 'should set an error message' do
         @bol.valid?
-        @bol.errors.on(:username).should include('Username must have at least one letter')
+        @bol.errors.on(:username).should == [ 'Username must have at least one letter' ]
       end
     end
   end

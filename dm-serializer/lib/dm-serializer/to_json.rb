@@ -1,10 +1,6 @@
 require 'dm-serializer/common'
 
-begin
-  require 'json/ext'
-rescue LoadError
-  require 'json/pure'
-end
+require 'json'
 
 module DataMapper
   module Serialize
@@ -13,19 +9,19 @@ module DataMapper
     # @return <String> a JSON representation of the Resource
     def to_json(*args)
       options = args.first || {}
-      result = '{ '
-      fields = []
+
+      result = {}
 
       propset = properties_to_serialize(options)
 
-      fields += propset.map do |property|
-        "#{property.name.to_json}: #{send(property.name).to_json}"
+      propset.each do |property|
+        result[property.name] = __send__(property.name)
       end
 
       # add methods
       (options[:methods] || []).each do |meth|
         if self.respond_to?(meth)
-          fields << "#{meth.to_json}: #{send(meth).to_json}"
+          result[meth] = __send__(meth)
         end
       end
 
@@ -35,15 +31,19 @@ module DataMapper
       # TODO: This needs tests and also needs to be ported to #to_xml and #to_yaml
       (options[:relationships] || {}).each do |rel,opts|
         if self.respond_to?(rel)
-          fields << "#{rel.to_json}: #{send(rel).to_json(opts)}"
+          result[rel] = send(rel).to_json(opts.merge(:to_json => false))
         end
       end
 
-      result << fields.join(', ')
-      result << ' }'
-      result
+      # default to making JSON
+      if options.fetch(:to_json, true)
+        result.to_json
+      else
+        result
+      end
     end
   end
+
 
   module Associations
     # the json gem adds Object#to_json, which breaks the DM proxies, since it
@@ -65,7 +65,16 @@ module DataMapper
   class Collection
     def to_json(*args)
       opts = args.first || {}
-      '[' << map { |e| e.to_json(opts) }.join(',') << ']'
+
+      options = opts.merge(:to_json => false)
+      collection = map { |e| e.to_json(options) }
+
+      # default to making JSON
+      if opts.fetch(:to_json, true)
+        collection.to_json
+      else
+        collection
+      end
     end
   end
 
@@ -74,15 +83,7 @@ module DataMapper
     module Validate
       class ValidationErrors
         def to_json(*args)
-          opts = args.first || {}
-
-          # This weird (invalid?) workaround seems to be necessary
-          # Ideally: errors.to_json(opts)
-          # However: wrong argument type Hash (expected Data) - (TypeError)
-
-          "{" << errors.map do |kv|
-            "#{kv.first.to_json}: " + "[" + kv.last.map { |e| e.to_json(opts) }.join(',') + "]"
-          end.join(',') << "}"
+          errors.to_hash.to_json
         end
       end
     end

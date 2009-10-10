@@ -1,10 +1,6 @@
-require 'pathname'
-
-dir = Pathname(__FILE__).dirname.expand_path / 'dm-constraints'
-
-require dir / 'delete_constraint'
-require dir / 'migrations'
-require dir / 'version'
+require 'dm-constraints/delete_constraint'
+require 'dm-constraints/migrations'
+require 'dm-constraints/version'
 
 module DataMapper
   module Associations
@@ -12,7 +8,7 @@ module DataMapper
       include Extlib::Hook
       include Constraints::DeleteConstraint
 
-      OPTIONS = (OPTIONS | [ :constraint ]).freeze
+      OPTIONS << :constraint
 
       attr_reader :constraint
 
@@ -26,14 +22,16 @@ module DataMapper
 
     class ManyToMany::Relationship
 
-      OPTIONS = (OPTIONS | [ :constraint ]).freeze
+      OPTIONS << :constraint
 
       private
 
       # TODO: document
       # @api semipublic
-      def one_to_many_options
-        { :constraint => @constraint }
+      chainable do
+        def one_to_many_options
+          super.merge(:constraint => @constraint)
+        end
       end
     end
   end

@@ -1,8 +1,5 @@
-require 'pathname'
-__dir__ = Pathname(__FILE__).dirname.expand_path
-
-require __dir__.parent.parent + 'spec_helper'
-require __dir__ + 'spec_helper'
+require 'spec_helper'
+require 'integration/required_field_validator/spec_helper'
 
 if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
   class Artist
@@ -81,7 +78,7 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
 
       it 'has a meaninful error messages on association key property' do
         @album.valid?
-        @album.errors.on(:artist).should include("Artist must not be blank")
+        @album.errors.on(:artist).should == [ 'Artist must not be blank' ]
       end
     end
 

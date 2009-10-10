@@ -1,5 +1,4 @@
-require 'pathname'
-require Pathname(__FILE__).dirname.expand_path + '../spec_helper'
+require 'spec_helper'
 
 describe 'Migration' do
 
@@ -376,7 +375,7 @@ describe 'Migration' do
 
         describe '#migration_record' do
           it 'should query for the migration' do
-            @adapter.should_receive(:query).with(
+            @adapter.should_receive(:select).with(
               %Q{SELECT 'migration_name' FROM 'migration_info' WHERE 'migration_name' = 'do_nothing'}
             )
             @m.migration_record
@@ -384,7 +383,7 @@ describe 'Migration' do
 
           it 'should not try to query if the table does not exist' do
             @m.stub!(:migration_info_table_exists?).and_return(false)
-            @adapter.should_not_receive(:query)
+            @adapter.should_not_receive(:select)
             @m.migration_record
           end
 

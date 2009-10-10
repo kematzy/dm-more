@@ -1,8 +1,5 @@
-require 'pathname'
-
-__dir__ = Pathname(__FILE__).dirname.expand_path
-require __dir__.parent.parent + 'spec_helper'
-require __dir__ + 'spec_helper'
+require 'spec_helper'
+require 'integration/method_validator/spec_helper'
 
 describe "a good fit for DSLs", :shared => true do
   it "is a good fit for DSLs" do
@@ -24,7 +21,7 @@ describe "a poor candidate for DSLs", :shared => true do
   end
 
   it "has a (more or less) meaningful error message" do
-    @model.errors.on(:ensure_appropriate_for_dsls).should include("may not be so good for domain specific languages")
+    @model.errors.on(:ensure_appropriate_for_dsls).should == [ 'may not be so good for domain specific languages' ]
   end
 end
 
@@ -149,7 +146,7 @@ describe "Ruby" do
 
   it "has a (more or less) meaningful error message" do
     @model.valid?(:doing_system_programming)
-    @model.errors.on(:ensure_appropriate_for_system_programming).should include("try something that is closer to the metal")
+    @model.errors.on(:ensure_appropriate_for_system_programming).should == [ 'try something that is closer to the metal' ]
   end
 end
 
@@ -176,7 +173,7 @@ describe "Scala" do
 
   it "has a (more or less) meaningful error message" do
     @model.valid?(:doing_system_programming)
-    @model.errors.on(:ensure_appropriate_for_system_programming).should include("try something that is closer to the metal")
+    @model.errors.on(:ensure_appropriate_for_system_programming).should == [ 'try something that is closer to the metal' ]
   end
 end
 
@@ -208,7 +205,7 @@ describe "Haskell" do
 
   it "has a (more or less) meaningful error message" do
     @model.valid?(:doing_system_programming)
-    @model.errors.on(:ensure_appropriate_for_system_programming).should include("try something that is closer to the metal")
+    @model.errors.on(:ensure_appropriate_for_system_programming).should == [ 'try something that is closer to the metal' ]
   end
 end
 
@@ -236,7 +233,7 @@ describe DataMapper::Validate::Fixtures::Event do
     it_should_behave_like "invalid model"
 
     it "uses custom error message for property starts_at" do
-      @model.errors.on(:starts_at).should include("Start time cannot be after end time")
+      @model.errors.on(:starts_at).should == [ 'Start time cannot be after end time' ]
     end
   end
 end

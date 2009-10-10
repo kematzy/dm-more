@@ -1,8 +1,9 @@
+gem 'hoe', '~>2.3'
 require 'hoe'
 
-@config_file = "~/.rubyforge/user-config.yml"
+@config_file = '~/.rubyforge/user-config.yml'
 @config = nil
-RUBYFORGE_USERNAME = "unknown"
+RUBYFORGE_USERNAME = 'unknown'
 def rubyforge_username
   unless @config
     begin
@@ -16,32 +17,35 @@ Run 'rubyforge setup' to prepare your env for access to Rubyforge
       exit
     end
   end
-  RUBYFORGE_USERNAME.replace @config["username"]
+  RUBYFORGE_USERNAME.replace @config['username']
 end
 
 # Remove hoe dependency
 class Hoe
   def extra_dev_deps
-    @extra_dev_deps.reject! { |dep| dep[0] == "hoe" }
+    @extra_dev_deps.reject! { |dep| dep[0] == 'hoe' }
     @extra_dev_deps
   end
 end
 
-hoe = Hoe.new(GEM_NAME, GEM_VERSION) do |p|
+# remove the hoe test task
+# (we have our own, with custom spec.opts file reading)
+Hoe.plugins.delete(:test)
 
-  p.developer(AUTHOR, EMAIL)
+Hoe.spec(GEM_NAME) do
+  developer(AUTHOR, EMAIL)
 
-  p.description = PROJECT_DESCRIPTION
-  p.summary = PROJECT_SUMMARY
-  p.url = PROJECT_URL
+  self.version      = GEM_VERSION
+  self.description  = PROJECT_DESCRIPTION
+  self.summary      = PROJECT_SUMMARY
+  self.url          = PROJECT_URL
+  self.readme_file  = 'README.rdoc'
+  self.history_file = 'History.rdoc'
 
-  p.rubyforge_name = PROJECT_NAME if PROJECT_NAME
+  self.rubyforge_name = PROJECT_NAME if PROJECT_NAME
 
-  p.clean_globs |= GEM_CLEAN
-  p.spec_extras = GEM_EXTRAS if GEM_EXTRAS
+  self.clean_globs |= GEM_CLEAN
+  self.extra_deps  |= GEM_DEPENDENCIES
 
-  GEM_DEPENDENCIES.each do |dep|
-    p.extra_deps << dep
-  end
-
+  self.spec_extras = GEM_EXTRAS if GEM_EXTRAS
 end
