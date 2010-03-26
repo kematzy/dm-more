@@ -8,7 +8,6 @@ require 'rubygems'
 # use local dm-core if running from a typical dev checkout.
 lib = File.join('..', '..', 'dm-core', 'lib')
 $LOAD_PATH.unshift(lib) if File.directory?(lib)
-require 'dm-core'
 
 # use local dm-validations if running from a typical dev checkout.
 lib = File.join('..', 'dm-validations', 'lib')
@@ -41,11 +40,7 @@ HAS_POSTGRES = load_driver(:postgres, 'postgres://postgres@localhost/dm_core_tes
 
 
 DEPENDENCIES = {
-  'bcrypt'    => 'bcrypt-ruby',
-  'fastercsv' => 'fastercsv',
-  'json'      => 'json',
-  'stringex'  => 'stringex',
-  'uuidtools' => 'uuidtools',
+  'bcrypt' => 'bcrypt-ruby',
 }
 
 def try_spec

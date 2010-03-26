@@ -1,3 +1,5 @@
+require 'dm-core'
+
 require 'dm-aggregates/adapters/data_objects_adapter'
 require 'dm-aggregates/aggregate_functions'
 require 'dm-aggregates/collection'
@@ -5,7 +7,12 @@ require 'dm-aggregates/core_ext/symbol'
 require 'dm-aggregates/model'
 require 'dm-aggregates/query'
 require 'dm-aggregates/repository'
-require 'dm-aggregates/version'
+
+begin
+  require 'active_support/core_ext/time/conversions'
+rescue LoadError
+  require 'extlib/time'
+end
 
 module DataMapper
   class Repository

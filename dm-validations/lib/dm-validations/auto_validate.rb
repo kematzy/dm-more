@@ -39,9 +39,9 @@ module DataMapper
       # @details [Triggers]
       #   Triggers that generate validator creation
       #
-      #   :nullable => false
-      #       Setting the option :nullable to false causes a
-      #       validates_presence_of validator to be automatically created on
+      #   :required => true
+      #       Setting the option :required to true causes a
+      #       validates_present validator to be automatically created on
       #       the property
       #
       #   :length => 20
@@ -111,8 +111,8 @@ module DataMapper
       def disabled_auto_validations?
         @disable_auto_validations || false
       end
-      alias auto_validations_disabled? disabled_auto_validations?
 
+      alias auto_validations_disabled? disabled_auto_validations?
 
       # Checks whether or not property should be auto validated.
       # It is the case for properties with :auto_validation option
@@ -125,7 +125,7 @@ module DataMapper
       end
 
       def infer_presence_validation_for(property, options)
-        return if allow_nil?(property)
+        return if skip_presence_validation?(property)
 
         validates_present property.name, options_with_message(options, property, :presence)
       end
@@ -193,8 +193,8 @@ module DataMapper
 
       private
 
-      def allow_nil?(property)
-        property.nullable? || property.serial?
+      def skip_presence_validation?(property)
+        property.allow_blank? || property.serial?
       end
     end # module AutoValidate
   end # module Validate

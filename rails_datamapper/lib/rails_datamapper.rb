@@ -18,7 +18,7 @@ module Rails
     private
 
       def config_file
-        Rails.root / 'config' / 'database.yml'
+        File.expand_path('config/database.yml', Rails.root)
       end
 
       def full_config

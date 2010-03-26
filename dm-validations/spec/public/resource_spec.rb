@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe DataMapper::Resource do
+describe 'DataMapper::Resource' do
   before :all do
     DataMapper::Validate::Fixtures::Barcode.auto_migrate!
 
@@ -34,10 +34,9 @@ describe DataMapper::Resource do
 
     describe 'when provided invalid attributes and a context' do
       before :all do
-        # remove data from previous spec runs
-        ::DataMapper::Validate::Fixtures::Organisation.all.destroy!
-        ::DataMapper::Validate::Fixtures::Department.all.destroy!
-        ::DataMapper::Validate::Fixtures::User.all.destroy!
+        DataMapper::Validate::Fixtures::Organisation.auto_migrate!
+        DataMapper::Validate::Fixtures::Department.auto_migrate!
+        DataMapper::Validate::Fixtures::User.auto_migrate!
 
         organization = DataMapper::Validate::Fixtures::Organisation.create(:name => 'Org 101', :domain => '101')
         dept         = DataMapper::Validate::Fixtures::Department.create(:name => 'accounting')
@@ -62,6 +61,44 @@ describe DataMapper::Resource do
 
       it 'should set errors' do
         @resource.errors.to_a.should == [ [ 'User name is already taken' ] ]
+      end
+    end
+  end
+
+  describe '#save' do
+    before :all do
+      @resource.code = 'a' * 10
+      @resource.save
+    end
+
+    describe 'on a new resource' do
+      it 'should call valid? once' do
+        @resource.valid_hook_call_count.should == 1
+      end
+    end
+
+    describe 'on a saved, non-dirty resource' do
+      before :all do
+        # reload the resource
+        @resource = @resource.model.get(*@resource.key)
+        @resource.save
+      end
+
+      it 'should not call valid?' do
+        @resource.valid_hook_call_count.should be_nil
+      end
+    end
+
+    describe 'on a saved, dirty resource' do
+      before :all do
+        # reload the resource
+        @resource = @resource.model.get(*@resource.key)
+        @resource.code = 'b' * 10
+        @resource.save
+      end
+
+      it 'should call valid? once' do
+        @resource.valid_hook_call_count.should == 1
       end
     end
   end

@@ -3,7 +3,6 @@ require 'rubygems'
 # Use local dm-core if running from a typical dev checkout.
 lib = File.join('..', '..', 'dm-core', 'lib')
 $LOAD_PATH.unshift(lib) if File.directory?(lib)
-require 'dm-core'
 
 # Use local dm-validations if running from a typical dev checkout.
 lib = File.join('..', 'dm-validations', 'lib')
@@ -33,7 +32,6 @@ ENV['ADAPTER'] ||= 'sqlite3'
 HAS_SQLITE3  = load_driver(:sqlite3,  'sqlite3::memory:')
 HAS_MYSQL    = load_driver(:mysql,    'mysql://localhost/dm_core_test')
 HAS_POSTGRES = load_driver(:postgres, 'postgres://postgres@localhost/dm_core_test')
-
 
 Spec::Runner.configure do |config|
   config.before do

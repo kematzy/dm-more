@@ -1,3 +1,40 @@
+require 'dm-core'
+
+begin
+
+  require 'active_support/core_ext/class/attribute_accessors'
+  require 'active_support/core_ext/object/blank'
+  require 'active_support/ordered_hash'
+
+  class Object
+    # If receiver is callable, calls it and
+    # returns result. If not, just returns receiver
+    # itself
+    #
+    # @return [Object]
+    def try_call(*args)
+      if self.respond_to?(:call)
+        self.call(*args)
+      else
+        self
+      end
+    end
+  end
+
+rescue LoadError
+
+  require 'extlib/class'
+  require 'extlib/dictionary'
+  require 'extlib/blank'
+  require 'extlib/try_dup'
+  require 'extlib/object'
+
+  module ActiveSupport
+    OrderedHash = Dictionary
+  end
+
+end
+
 require 'dm-validations/exceptions'
 require 'dm-validations/validation_errors'
 require 'dm-validations/contextual_validators'
@@ -57,7 +94,7 @@ module DataMapper
 
     chainable do
       def save_self(*)
-        return false unless validation_context_stack.empty? || valid?(current_validation_context)
+        return false unless !dirty_self? || validation_context_stack.empty? || valid?(current_validation_context)
         super
       end
     end

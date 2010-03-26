@@ -19,7 +19,7 @@ shared_examples_for 'It Has Setup Resources' do
       property :birth_on,          Date
       property :birth_time,        Time
 
-      belongs_to :knight, :nullable => true
+      belongs_to :knight, :required => false
     end
 
     # A more complex example, with BigDecimal and Float properties
@@ -29,7 +29,7 @@ shared_examples_for 'It Has Setup Resources' do
       include DataMapper::Resource
 
       property :id,                  Serial
-      property :name,                String,     :nullable => false
+      property :name,                String,     :required => true
       property :population,          Integer
       property :birth_rate,          Float,      :precision => 4,  :scale => 2
       property :gold_reserve_tonnes, Float,      :precision => 6,  :scale => 2
@@ -40,7 +40,7 @@ shared_examples_for 'It Has Setup Resources' do
 
     @birth_time = Time.now
     @birth_at   = @birth_time.to_datetime
-    @birth_on   = @birth_time.to_date
+    @birth_on   = @birth_time.send(:to_date)
 
     @chuck = Knight.create(:name => 'Chuck')
     @larry = Knight.create(:name => 'Larry')
@@ -141,7 +141,7 @@ shared_examples_for 'An Aggregatable Class' do
 
       it 'should provide the lowest value of a DateTime property' do
         @dragons.min(:birth_at).should be_kind_of(DateTime)
-        @dragons.min(:birth_at).should == @birth_at
+        @dragons.min(:birth_at).to_s.should == @birth_at.to_s
       end
 
       it 'should provide the lowest value of a Date property' do
@@ -151,7 +151,7 @@ shared_examples_for 'An Aggregatable Class' do
 
       it 'should provide the lowest value of a Time property' do
         @dragons.min(:birth_time).should be_kind_of(Time)
-        @dragons.min(:birth_time).should == @birth_time
+        @dragons.min(:birth_time).to_s.should == @birth_time.to_s
       end
 
       it 'should provide the lowest value when conditions provided' do
@@ -186,7 +186,7 @@ shared_examples_for 'An Aggregatable Class' do
 
       it 'should provide the highest value of a DateTime property' do
         @dragons.min(:birth_at).should be_kind_of(DateTime)
-        @dragons.min(:birth_at).should == @birth_at
+        @dragons.min(:birth_at).to_s.should == @birth_at.to_s
       end
 
       it 'should provide the highest value of a Date property' do
@@ -196,7 +196,7 @@ shared_examples_for 'An Aggregatable Class' do
 
       it 'should provide the highest value of a Time property' do
         @dragons.min(:birth_time).should be_kind_of(Time)
-        @dragons.min(:birth_time).should == @birth_time
+        @dragons.min(:birth_time).to_s.should == @birth_time.to_s
       end
 
       it 'should provide the highest value when conditions provided' do

@@ -12,7 +12,7 @@ end
 
 try_spec do
 
-  require 'spec/fixtures/network_node'
+  require './spec/fixtures/network_node'
 
   describe DataMapper::Types::Fixtures::NetworkNode do
     before :all do
@@ -125,8 +125,12 @@ try_spec do
           @resource.reload
         end
 
-        it 'has NO IP address' do
-          @resource.ip_address.should be_nil
+        it 'is an IPv4 node' do
+          @resource.should run_ipv4
+        end
+
+        it 'should be the expected value' do
+          @resource.ip_address.should == IPAddr.new('0.0.0.0')
         end
       end
     end

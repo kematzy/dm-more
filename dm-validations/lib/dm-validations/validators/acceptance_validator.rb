@@ -10,9 +10,9 @@ module DataMapper
       def initialize(field_name, options = {})
         super
 
-        # ||= true makes value true if it used to be false
-        @options[:allow_nil] = true unless(options.include?(:allow_nil) && [false, nil, "false", "f"].include?(options[:allow_nil]))
-        @options[:accept]    ||= ["1", 1, "true", true, "t"]
+        @options[:allow_nil] = true unless @options.key?(:allow_nil)
+
+        @options[:accept] ||= [ '1', 1, 'true', true, 't' ]
         @options[:accept] = Array(@options[:accept])
       end
 
@@ -25,14 +25,13 @@ module DataMapper
         false
       end
 
+      private
+
       def valid?(target)
-        field_value = target.validation_property_value(field_name)
-        # Allow empty values
-        return true if @options[:allow_nil] && field_value.blank?
-
-        @options[:accept].include?(field_value)
+        value = target.validation_property_value(field_name)
+        return true if allow_nil?(value)
+        @options[:accept].include?(value)
       end
-
     end # class AcceptanceValidator
 
     module ValidatesIsAccepted
@@ -40,7 +39,7 @@ module DataMapper
       ##
       # Validates that the attributes's value is in the set of accepted values.
       #
-      # @option :allow_nil<Boolean> true if nil is allowed, false if nil is not
+      # @option :allow_nil<Boolean> true if nil is allowed, false if not
       #                             allowed. Default is true.
       # @option :accept<Array>      a list of accepted values.
       #                             Default are ["1", 1, "true", true, "t"]).

@@ -1,11 +1,12 @@
+require 'dm-core'
+
 require 'dm-constraints/delete_constraint'
 require 'dm-constraints/migrations'
-require 'dm-constraints/version'
 
 module DataMapper
   module Associations
     class OneToMany::Relationship
-      include Extlib::Hook
+      include DataMapper::Hook
       include Constraints::DeleteConstraint
 
       OPTIONS << :constraint
@@ -57,6 +58,8 @@ module DataMapper
         end
       RUBY
     end
+
+    Model.append_inclusions self
   end
 
   module Migrations

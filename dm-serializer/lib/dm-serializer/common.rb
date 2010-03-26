@@ -1,3 +1,14 @@
+begin
+  require 'active_support/ordered_hash'
+rescue LoadError
+  require 'extlib/dictionary'
+  module ActiveSupport
+    OrderedHash = Dictionary unless defined?(OrderedHash)
+  end
+end
+
+require 'dm-core'
+
 module DataMapper
   module Serialize
     # Returns propreties to serialize based on :only or :exclude arrays, if provided

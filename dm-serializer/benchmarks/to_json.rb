@@ -2,7 +2,7 @@ require "rubygems"
 require 'pathname'
 require 'better-benchmark'
 
-gem 'dm-core', '0.10.2'
+gem 'dm-core', '0.10.3'
 require 'dm-core'
 
 spec_dir_path = Pathname(__FILE__).dirname.expand_path
@@ -82,7 +82,7 @@ class Cow
   property :breed,     String
 
   has n, :baby_cows, :model => 'Cow'
-  belongs_to :mother_cow, :model => 'Cow', :nullable => true
+  belongs_to :mother_cow, :model => 'Cow', :required => false
 end
 
 DataMapper.auto_migrate!

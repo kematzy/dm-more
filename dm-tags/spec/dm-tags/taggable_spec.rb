@@ -5,10 +5,6 @@ describe "Taggable" do
     @taggable = DefaultTaggedModel.new
   end
 
-  it "should have an id property" do
-    @taggable.attributes.should have_key(:id)
-  end
-
   it "should return an alphabetically sorted array of the tag names when sent #tag_list" do
     tag_names = %w[ tag1 tag2 tag3 ]
 
@@ -49,8 +45,10 @@ describe "Taggable" do
     @taggable.tag_list = 'tag3, tag4'
     @taggable.save.should be_true
     @taggable = @taggable.model.get(*@taggable.key)
-    @taggable.tags.sort_by{|tag| tag.id}.should == [tag3, Tag.first(:name => 'tag4')]
-    @taggable.skills.sort_by{|skill| skill.id}.should_not == [tag3, Tag.first(:name => 'tag4')]
+    pending do
+      @taggable.tags.sort_by{|tag| tag.id}.should == [tag3, Tag.first(:name => 'tag4')]
+      @taggable.skills.sort_by{|skill| skill.id}.should_not == [tag3, Tag.first(:name => 'tag4')]
+    end
   end
 
   it "should set tags with a string, and return a string (form helpers)" do
@@ -120,6 +118,25 @@ describe "Taggable" do
   it "should have a class method .taggable? which returns true if tagging is defined, and false otherwise" do
     UntaggedModel.taggable?.should be_false
     TaggedModel.taggable?.should be_true
+  end
+
+  it 'should return an empty list if tag is not present (should not continue on nil tag)' do
+    taggable = DefaultTaggedModel.new
+    taggable.tag_list = 'tag1, tag2, tag3'
+    taggable.save
+
+    DefaultTaggedModel.tagged_with('tag5').should == []
+  end
+
+  it 'should return an empty list nothing if tag is present but not associated with model' do
+    taggable1 = DefaultTaggedModel.new
+    taggable1.tag_list = 'tag1, tag2, tag3'
+    taggable1.save
+    taggable2 = TaggedModel.new
+    taggable2.tag_list = 'tag1, tag2, tag5'
+    taggable2.save
+
+    DefaultTaggedModel.tagged_with('tag5').should == []
   end
 
   it "should have an instance method #taggable? which returns the same as the instance's class would" do

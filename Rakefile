@@ -1,9 +1,12 @@
 require 'pathname'
 require 'spec/rake/spectask'
 require 'rake/rdoctask'
+require 'rake/gempackagetask'
 require 'fileutils'
-require 'lib/dm-more/version'
 include FileUtils
+
+JRUBY   = RUBY_PLATFORM =~ /java/
+WINDOWS = Gem.win_platform? || (JRUBY && ENV_JAVA['os.name'] =~ /windows/i)
 
 ## ORDER IS IMPORTANT
 # gems may depend on other member gems of dm-more
@@ -25,11 +28,8 @@ gem_paths = %w[
   dm-is-state_machine
   dm-is-tree
   dm-is-versioned
-  dm-is-viewable
   dm-migrations
   dm-observer
-  dm-querizer
-  dm-shorthand
   dm-sweatshop
   dm-tags
   dm-timestamps
@@ -37,80 +37,91 @@ gem_paths = %w[
 ]
 
 # skip installing ferret on Ruby 1.9 until the gem is fixed
-if RUBY_VERSION >= '1.9.0'
+if JRUBY || WINDOWS || RUBY_VERSION < '1.9'
   gem_paths -= %w[ adapters/dm-ferret-adapter ]
 end
 
-GEM_PATHS = gem_paths.freeze
+gems = gem_paths.map { |gem_path| File.basename(gem_path) }
 
-gems = GEM_PATHS.map { |p| File.basename(p) }
+excluded_gems = ENV['EXCLUDE'] ? ENV['EXCLUDE'].split(',') : []
+gem_paths     = gem_paths - excluded_gems
 
-ROOT    = Pathname(__FILE__).dirname.expand_path
-JRUBY   = RUBY_PLATFORM =~ /java/
-WINDOWS = Gem.win_platform?
-SUDO    = (WINDOWS || JRUBY) ? '' : ('sudo' unless ENV['SUDOLESS'])
+gem_spec = Gem::Specification.new do |gem|
+  gem.name        = 'dm-more'
+  gem.summary     = 'DataMapper Plugins'
+  gem.description = gem.summary
+  gem.email       = 'dan.kubb [a] gmail [d] com'
+  gem.homepage    = 'http://github.com/datamapper/dm-more/'
+  gem.authors     = [ 'Dan Kubb' ]
 
-AUTHOR = 'Dan Kubb'
-EMAIL  = 'dan.kubb [a] gmail [d] com'
-GEM_NAME = 'dm-more'
-GEM_VERSION = DataMapper::More::VERSION
-GEM_DEPENDENCIES = [['dm-core', GEM_VERSION], *gems.map { |g| [g, GEM_VERSION] }]
-GEM_CLEAN = %w[ **/.DS_Store} *.db doc/rdoc .config **/{coverage,log,pkg} cache lib/dm-more.rb ]
-GEM_EXTRAS = { :has_rdoc => false }
+  gem.version = File.read('VERSION').chomp
 
-PROJECT_NAME = 'datamapper'
-PROJECT_URL  = 'http://github.com/datamapper/dm-more/tree/master'
-PROJECT_DESCRIPTION = 'Faster, Better, Simpler.'
-PROJECT_SUMMARY = 'An Object/Relational Mapper for Ruby'
+  gem.rubyforge_project = 'datamapper'
 
-Pathname.glob(ROOT.join('tasks/**/*.rb').to_s).each { |f| require f }
+  gem.add_dependency 'dm-core', '~> 0.10.3'
 
-def sudo_gem(cmd)
-  sh "#{SUDO} #{RUBY} -S gem #{cmd}", :verbose => false
+  gems.each do |gem_name|
+    gem.add_dependency File.basename(gem_name), '~> 0.10.3'
+  end
+
+  gem.add_development_dependency 'rspec', '~> 1.3'
+  gem.add_development_dependency 'yard',  '~> 0.5'
+
+  gem.require_path = 'lib'
+  gem.files        = %w[ LICENSE README.rdoc lib/dm-more.rb ]
 end
 
-desc "Install #{GEM_NAME} #{GEM_VERSION}"
-task :install => [ :install_gems, :package ] do
-  sudo_gem "install pkg/#{GEM_NAME}-#{GEM_VERSION} --no-update-sources"
+Rake::GemPackageTask.new(gem_spec) do |package|
+  package.gem_spec = gem_spec
 end
 
-desc "Uninstall #{GEM_NAME} #{GEM_VERSION}"
-task :uninstall => [ :uninstall_gems, :clobber ] do
-  sudo_gem "uninstall #{GEM_NAME} -v#{GEM_VERSION} -Ix"
+FileList['tasks/**/*.rake'].each { |task| import task }
+
+def rake(cmd, bundle_exec = false)
+  sh "#{bundle_exec ? 'bundle exec ' : ''}#{RUBY} -S rake #{cmd}", :verbose => true
 end
 
-def rake(cmd)
-  sh "#{RUBY} -S rake #{cmd}", :verbose => false
+def bundle(cmd)
+  sh "bundle #{cmd}", :verbose => true
 end
 
-desc "Build #{GEM_NAME} #{GEM_VERSION}"
-task :build_gems do
-  GEM_PATHS.each do |dir|
-    Dir.chdir(dir){ rake 'gem' }
+desc "Install #{gem_spec.name}"
+task :install do
+  gem_paths.each do |dir|
+    Dir.chdir(dir) { rake 'install', true }
   end
 end
 
-desc 'Install the dm-more gems'
-task :install_gems => :build_gems do
-  GEM_PATHS.each do |dir|
-    Dir.chdir(dir){ rake 'install; true' }
+desc "Generate gemspecs for all gems in #{gem_spec.name}"
+task :gemspec do
+  gem_paths.each do |dir|
+    Dir.chdir(dir) { rake 'gemspec', true }
   end
 end
 
-desc 'Uninstall the dm-more gems'
-task :uninstall_gems do
-  GEM_PATHS.each do |dir|
-    Dir.chdir(dir){ rake 'uninstall; true' }
+namespace :bundle do
+  desc "Runs 'bundle install --without quality' for all gems in #{gem_spec.name} (suitable for spec runs)"
+  task :install do
+    gem_paths.each do |dir|
+      Dir.chdir(dir) { bundle 'install --without quality' }
+    end
+  end
+
+  namespace :install do
+    desc "Runs 'bundle install' for all gems in #{gem_spec.name}"
+    task :quality do
+      gem_paths.each do |dir|
+        Dir.chdir(dir) { bundle 'install' }
+      end
+    end
   end
 end
 
-task :package => %w[ lib/dm-more.rb ]
-
-task 'lib/dm-more.rb' do
+file 'lib/dm-more.rb' do
   mkdir_p 'lib'
   File.open('lib/dm-more.rb', 'w+') do |file|
     file.puts '### AUTOMATICALLY GENERATED.  DO NOT EDIT.'
-    (gems - %w[ dm-gen ]).each do |gem|
+    gems.each do |gem|
       lib = if '-adapter' == gem[-8..-1]
         gem.split('-')[1..-1].join('_')
       else
@@ -121,62 +132,25 @@ task 'lib/dm-more.rb' do
   end
 end
 
-task :bundle => [ :package, :build_gems ] do
-  mkdir_p 'bundle'
-  cp "pkg/dm-more-#{GEM_VERSION}.gem", 'bundle'
-  GEM_PATHS.each do |gem|
-    File.open("#{gem}/Rakefile") do |rakefile|
-      rakefile.read.detect {|l| l =~ /^VERSION\s*=\s*'(.*)'$/ }
-      cp "#{gem}/pkg/#{File.basename(gem)}-#{$1}.gem", 'bundle'
-    end
-  end
-end
+desc "Release #{gem_spec.name}"
+task :release => [ :gem ] do
+  gem_paths.each do |dir|
+    Dir.chdir(dir) { rake 'release', true }
 
-# NOTE: this task must be named release_all, and not release
-desc "Release #{GEM_NAME} #{GEM_VERSION}"
-task :release_all do
-  sh "rake release VERSION=#{GEM_VERSION}"
-  GEM_PATHS.each do |dir|
-    Dir.chdir(dir) { rake "release VERSION=#{GEM_VERSION}" }
+    # workaround Jeweler bug.  it was identifying the repo as
+    # in a dirty state, but it is not.  running git status clears
+    # the dirty state.
+    system 'git status >/dev/null'
   end
+
+  sh "#{RUBY} -S gem push pkg/dm-more-#{gem_spec.version}.gem"
 end
 
 desc 'Run specs'
 task :spec do
-  exit 1 unless (GEM_PATHS - %w[ rails_datamapper ]).map do |gem_name|
-    Dir.chdir(gem_name) { rake :spec rescue false }
+  exit 1 unless (gem_paths - %w[ rails_datamapper ]).map do |gem_name|
+    Dir.chdir(gem_name) { rake 'spec', true }
   end.all?
-end
-
-%w[ ci clean clobber check_manifest ].each do |command|
-  task command do
-    GEM_PATHS.each do |gem_name|
-      Dir.chdir(gem_name){ rake "#{command}; true" }
-    end
-  end
-end
-
-task :update_manifest do
-  GEM_PATHS.each do |gem_name|
-    Dir.chdir(gem_name){ rake 'check_manifest | patch; true' }
-  end
-end
-
-namespace :dm do
-  desc 'Run specifications'
-  task :specs do
-    Spec::Rake::SpecTask.new(:spec) do |t|
-      Dir['**/Rakefile'].each do |rakefile|
-        # don't run in the top level dir or in the pkg dir
-        unless rakefile == 'Rakefile' || rakefile =~ /^pkg/
-          # running chdir in a block runs the task in specified dir, then returns to previous dir.
-          Dir.chdir(File.join(File.dirname(__FILE__), File.dirname(rakefile))) do
-            raise "Broken specs in #{rakefile}" unless system 'rake'
-          end
-        end
-      end
-    end
-  end
 end
 
 task :default => :spec

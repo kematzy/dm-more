@@ -33,7 +33,7 @@ module DataMapper
         @options              = options.except(:if, :unless)
         @if_clause            = options[:if]
         @unless_clause        = options[:unless]
-        @humanized_field_name = Extlib::Inflection.humanize(@field_name)
+        @humanized_field_name = ActiveSupport::Inflector.humanize(@field_name)
       end
 
       # Add an error message to a target resource. If the error corresponds to a
@@ -78,6 +78,42 @@ module DataMapper
         end
 
         true
+      end
+
+      # Set the default value for allow_nil and allow_blank
+      #
+      # @param [Boolean] default value
+      # @return <undefined>
+      def set_optional_by_default(default = true)
+        [ :allow_nil, :allow_blank ].each do |key|
+          @options[key] = true unless options.key?(key)
+        end
+      end
+
+      # Test the value to see if it is blank or nil, and if it is allowed
+      #
+      # @param <Object> value to test
+      # @return <Boolean> true if blank/nil is allowed, and the value is blank/nil
+      def optional?(value)
+        return allow_nil?(value)   if value.nil?
+        return allow_blank?(value) if value.blank?
+        false
+      end
+
+      # Test if the value is nil and is allowed
+      #
+      # @param <Object> value to test
+      # @return <Boolean> true if nil is allowed and value is nil
+      def allow_nil?(value)
+        @options[:allow_nil] if value.nil?
+      end
+
+      # Test if the value is blank and is allowed
+      #
+      # @param <Object> value to test
+      # @return <Boolean> true if blank is allowed and value is blank
+      def allow_blank?(value)
+        @options[:allow_blank] if value.blank?
       end
 
       # Returns true if validators are equal
